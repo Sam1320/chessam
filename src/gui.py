@@ -1,4 +1,6 @@
 from tkinter import *
+from utilities.images_dict import Images
+
 
 class GameBoard(Frame):
     def __init__(self, parent, rows=8, columns=8, size=64, color1="white",
@@ -11,6 +13,7 @@ class GameBoard(Frame):
         self.color1 = color1
         self.color2 = color2
         self.pieces = {}
+        self.images_dic = Images.load_images()
 
         canvas_width = columns * size
         canvas_height = rows * size
@@ -57,16 +60,33 @@ class GameBoard(Frame):
         for name in self.pieces:
             self.place_piece(name, self.pieces[name][0], self.pieces[name][1])
         self.canvas.tag_raise("piece")
+        self.canvas.tag_lower("square")
+
+    def setup_board(self):
+        images = self.images_dic
+        for c in range(self.columns):
+            self.add_piece("white_pawn_" + str(c), self.images_dic["white_pawn"], 6, c)
+            self.add_piece("black_pawn_" + str(c), images["black_pawn"], 1, c)
+            if c == 0 or c == 7:
+                self.add_piece("white_rook_" + str(c), images["white_rook"], 7, c)
+                self.add_piece("black_rook_" + str(c), images["black_rook"], 0, c)
+            if c == 1 or c == 6:
+                self.add_piece("white_knight_" + str(c), images["white_knight"], 7, c)
+                self.add_piece("black_knight_" + str(c), images["black_knight"], 0, c)
+            if c == 2 or c == 5:
+                self.add_piece("white_bishop_" + str(c), images["white_bishop"], 7, c)
+                self.add_piece("black_bishop_" + str(c), images["black_bishop"], 0, c)
+            if c == 3:
+                self.add_piece("white_queen_" + str(c), images["white_queen"], 7, c)
+                self.add_piece("black_queen_" + str(c), images["black_queen"], 0, c)
+            if c == 4:
+                self.add_piece("white_king_" + str(c), images["white_king"], 7, c)
+                self.add_piece("black_king_" + str(c), images["black_king"], 0, c)
 
 
 if __name__ == "__main__":
     root = Tk()
     board = GameBoard(root)
     board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
-    image = PhotoImage(file=r"C:\Users\Sam\Documents\Python Scripts\Chess\images\white_pawn.png")
-    #scale_w = new_width / old_width
-    #scale_h = new_height / old_height
-    for col in range(board.columns):
-        board.add_piece("white_pawn_"+str(col), image, 6, col)
+    board.setup_board()
     root.mainloop()
-
