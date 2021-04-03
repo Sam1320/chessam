@@ -1,6 +1,6 @@
 from tkinter import *
 from utilities.images_dict import Images
-
+from collections import defaultdict
 
 class GameBoard(Frame):
     def __init__(self, parent, rows=8, columns=8, size=64, color1="white",
@@ -12,8 +12,8 @@ class GameBoard(Frame):
         self.size = size
         self.color1 = color1
         self.color2 = color2
-        self.pieces_coords = {}
-        self.coords_pieces = {}
+        self.pieces_coords = defaultdict(lambda: None)
+        self.coords_pieces = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
         self.coords_label = Label(text="")
         self.coords_label.pack(side="bottom", pady=2)
@@ -43,6 +43,16 @@ class GameBoard(Frame):
 
     def place_piece(self, name, row, column):
         # Place a piece at the given row/column
+        if self.coords_pieces[(row, column)]:
+            dead_piece = self.coords_pieces[(row, column)]
+            self.select_label.config(text=dead_piece)
+            self.canvas.delete((dead_piece, "piece"))
+            #TODO: find optimal solution
+            self.canvas.coords(dead_piece, -self.size, -self.size)
+
+        old_coords = self.pieces_coords[name]
+        if old_coords:
+            self.coords_pieces[old_coords] = None
         self.pieces_coords[name] = (row, column)
         self.coords_pieces[(row, column)] = name
         x0 = (column * self.size) + int(self.size/2)
