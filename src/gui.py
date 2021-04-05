@@ -17,13 +17,16 @@ class GameBoard(Frame):
         self.coords_pieces = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
         self.coords_label = Label(text="")
-        self.coords_label.pack(side="bottom", pady=2)
+        self.coords_label.pack(side="bottom", pady=1)
+        self.turn_label = Label(text="Turn: Player 1")
         self.select_label = Label(text="row:  col:  ")
-        self.select_label.pack(side="bottom", pady=2)
+        self.select_label.pack(side="bottom", pady=1)
+        self.turn_label.pack(side="bottom", pady=1)
         canvas_width = columns * size
         canvas_height = rows * size
         self.selected = False
         self.selected_piece = None
+        self.player = 1
 
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
                              width=canvas_width, height=canvas_height,
@@ -45,7 +48,8 @@ class GameBoard(Frame):
     def place_piece(self, name, row, column):
         type = name.split("_")[1]
         old_coords = self.pieces_coords[name]
-        if self.valid_move(type, old_coords,(row, column)):
+        valid = self.valid_move(type, old_coords,(row, column))
+        if valid:
             # if target square is occupied then delete the taken piece
             if self.coords_pieces[(row, column)]:
                 dead_piece = self.coords_pieces[(row, column)]
@@ -61,6 +65,7 @@ class GameBoard(Frame):
             x0 = (column * self.size) + int(self.size/2)
             y0 = (row * self.size) + int(self.size/2)
             self.canvas.coords(name, x0, y0)
+        return valid
 
     def refresh(self, event):
         # Redraw the board, possibly in response to window being resized
@@ -88,9 +93,12 @@ class GameBoard(Frame):
         if self.selected:
             row, col = self.coords_to_row_col(e.x, e.y)
             self.canvas.delete("selected")
-            self.place_piece(self.selected_piece, row, col)
+            valid = self.place_piece(self.selected_piece, row, col)
             self.selected_piece = None
             self.selected = False
+            if valid:
+                self.player = 2 if self.player == 1 else 1
+                self.turn_label.config(text="Turn: Player " +str(self.player))
         else:
             row, col = self.coords_to_row_col(e.x, e.y)
             x1 = (col * self.size)
@@ -174,10 +182,12 @@ class GameBoard(Frame):
         y1, x1 = old_coords[0], old_coords[1]
         y2, x2 = new_coords[0], new_coords[1]
         if type == "pawn":
-            if x1 == x2 and y1== y2+1:
+            if (x1 == x2 and y1 == y2+1 and self.player == 1) or \
+                    (x1 == x2 and y1 == y2-1 and self.player == 2):
                 return True
 
         return False
+
 
 if __name__ == "__main__":
     root = Tk()
