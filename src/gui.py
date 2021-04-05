@@ -179,86 +179,102 @@ class GameBoard(Frame):
     def valid_move(self, piece_type, piece_color, old_coords, new_coords):
         if not old_coords:
             return True
-        if (piece_color  == self.player_1_color and self.player != 1) or \
-                (piece_color != self.player_1_color  and self.player == 1):
+        if (piece_color == self.player_1_color and self.player != 1) or \
+                (piece_color != self.player_1_color and self.player == 1):
             return False
-
         y1, x1 = old_coords[0], old_coords[1]
         y2, x2 = new_coords[0], new_coords[1]
-        player = self.player
-        take = True if self.coords_pieces[new_coords] else False
         if piece_type == "pawn":
-            # One move forward
-            if not take and ((x1 == x2 and y1 == y2+1 and player == 1) or
-                    (x1 == x2 and y1 == y2-1 and player == 2)):
-                return True
-            # Two moves forward and first move
-            elif not take and ((y1 == 1 or y1 == 6) and
-                    ((x1 == x2 and y1 == y2+2 and player == 1)
-                     or (x1 == x2 and y1 == y2-2 and player == 2))):
-                return True
-            # One square diagonal and take
-            elif take and ((abs(x1-x2) == 1 and y1 == y2+1 and player == 1)
-                    or (abs(x1-x2) == 1 and y1 == y2-1 and player == 2)):
-                return True
+            return self.valid_pawn_move(x1, y1, x2, y2)
         elif piece_type == "knight":
-            if (abs(x1-x2) == 2 and abs(y1-y2) == 1) or \
-               (abs(x1-x2) == 1 and abs(y1-y2) == 2):
-                return True
+            return self.valid_knight_move(x1, y1, x2, y2)
         elif piece_type == "bishop":
-            if abs(x1-x2) == abs(y1-y2):
-                # up and right movement
-                if x1 < x2 and y1 > y2:
-                    for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1-i, x1+i)]:
-                            return False
-                # down and right movement
-                elif x1 < x2 and y1 < y2:
-                    for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1+i, x1+i)]:
-                            return False
-                # up and left movement
-                elif x1 > x2 and y1 > y2:
-                    for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1-i, x1-i)]:
-                            return False
-                # down and left movement
-                elif x1 > x2 and y1 < y2:
-                    for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1+i, x1-i)]:
-                            return False
-                return True
-
+            return self.valid_bishop_move(x1, y1, x2, y2)
         elif piece_type == "rook":
-            if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
-                # upward movement
-                if x1==x2 and y1 > y2:
-                    for i in range(1, abs(y1-y2)):
-                        if self.coords_pieces[(y1-i, x1)]:
-                            return False
-                # downward movement
-                elif x1==x2 and y1 < y2:
-                    for i in range(1, abs(y1-y2)):
-                        if self.coords_pieces[(y1+i, x1)]:
-                            return False
-                # rightward movement
-                elif x1 < x2 and y1 == y2:
-                    for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1, x1+i)]:
-                            return False
-                # leftward movement
-                elif x1 > x2 and y1 == y2:
-                    for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1, x1-i)]:
-                            return False
+            return self.valid_rook_move(x1, y1, x2, y2)
+        elif piece_type == "queen":
+            if self.valid_rook_move(x1, y1, x2, y2) or \
+                    self.valid_bishop_move(x1, y1, x2, y2):
                 return True
-
-
-
 
         return False
 
+    def valid_rook_move(self, x1, y1, x2, y2):
+        if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
+            # upward movement
+            if x1 == x2 and y1 > y2:
+                for i in range(1, abs(y1 - y2)):
+                    if self.coords_pieces[(y1 - i, x1)]:
+                        return False
+            # downward movement
+            elif x1 == x2 and y1 < y2:
+                for i in range(1, abs(y1 - y2)):
+                    if self.coords_pieces[(y1 + i, x1)]:
+                        return False
+            # rightward movement
+            elif x1 < x2 and y1 == y2:
+                for i in range(1, abs(x1 - x2)):
+                    if self.coords_pieces[(y1, x1 + i)]:
+                        return False
+            # leftward movement
+            elif x1 > x2 and y1 == y2:
+                for i in range(1, abs(x1 - x2)):
+                    if self.coords_pieces[(y1, x1 - i)]:
+                        return False
+            return True
+        else:
+            return False
 
+    def valid_bishop_move(self, x1,y1,x2,y2):
+        if abs(x1 - x2) == abs(y1 - y2):
+            # up and right movement
+            if x1 < x2 and y1 > y2:
+                for i in range(1, abs(x1 - x2)):
+                    if self.coords_pieces[(y1 - i, x1 + i)]:
+                        return False
+            # down and right movement
+            elif x1 < x2 and y1 < y2:
+                for i in range(1, abs(x1 - x2)):
+                    if self.coords_pieces[(y1 + i, x1 + i)]:
+                        return False
+            # up and left movement
+            elif x1 > x2 and y1 > y2:
+                for i in range(1, abs(x1 - x2)):
+                    if self.coords_pieces[(y1 - i, x1 - i)]:
+                        return False
+            # down and left movement
+            elif x1 > x2 and y1 < y2:
+                for i in range(1, abs(x1 - x2)):
+                    if self.coords_pieces[(y1 + i, x1 - i)]:
+                        return False
+            return True
+        else:
+            return False
+
+
+    def valid_pawn_move(self, x1, y1, x2, y2):
+        take = True if self.coords_pieces[(y2, x2)] else False
+        player = self.player
+        # One move forward
+        if not take and ((x1 == x2 and y1 == y2 + 1 and player == 1) or
+                         (x1 == x2 and y1 == y2 - 1 and player == 2)):
+            return True
+        # Two moves forward and first move
+        elif not take and ((y1 == 1 or y1 == 6) and
+                           ((x1 == x2 and y1 == y2 + 2 and player == 1)
+                            or (x1 == x2 and y1 == y2 - 2 and player == 2))):
+            return True
+        # One square diagonal and take
+        elif take and ((abs(x1 - x2) == 1 and y1 == y2 + 1 and player == 1)
+                       or (abs(
+                    x1 - x2) == 1 and y1 == y2 - 1 and player == 2)):
+            return True
+        return False
+
+    def valid_knight_move(self, x1, y1, x2, y2):
+        if (abs(x1 - x2) == 2 and abs(y1 - y2) == 1) or \
+                (abs(x1 - x2) == 1 and abs(y1 - y2) == 2):
+            return True
 if __name__ == "__main__":
     root = Tk()
     board = GameBoard(root)
