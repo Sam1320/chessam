@@ -27,6 +27,7 @@ class GameBoard(Frame):
         self.selected = False
         self.selected_piece = None
         self.player = 1
+        self.player_1_color = "white"
 
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
                              width=canvas_width, height=canvas_height,
@@ -45,14 +46,15 @@ class GameBoard(Frame):
                                  anchor="c")
         self.place_piece(name, row, column)
 
-    def place_piece(self, name, row, column):
-        type = name.split("_")[1]
+    def place_piece(self, name, row, col):
+        piece_type = name.split("_")[1]
+        piece_color = name.split("_")[0]
         old_coords = self.pieces_coords[name]
-        valid = self.valid_move(type, old_coords,(row, column))
+        valid = self.valid_move(piece_type, piece_color, old_coords,(row, col))
         if valid:
             # if target square is occupied then delete the taken piece
-            if self.coords_pieces[(row, column)]:
-                dead_piece = self.coords_pieces[(row, column)]
+            if self.coords_pieces[(row, col)]:
+                dead_piece = self.coords_pieces[(row, col)]
                 # TODO:remove after debug
                 self.select_label.config(text=dead_piece)
                 # TODO: find optimal solution
@@ -60,9 +62,9 @@ class GameBoard(Frame):
             # free previous square in coord_pieces dict
             if old_coords:
                 self.coords_pieces[old_coords] = None
-            self.pieces_coords[name] = (row, column)
-            self.coords_pieces[(row, column)] = name
-            x0 = (column * self.size) + int(self.size/2)
+            self.pieces_coords[name] = (row, col)
+            self.coords_pieces[(row, col)] = name
+            x0 = (col * self.size) + int(self.size/2)
             y0 = (row * self.size) + int(self.size/2)
             self.canvas.coords(name, x0, y0)
         return valid
@@ -176,14 +178,18 @@ class GameBoard(Frame):
     def cursor_coords(self, e):
         self.coords_label.config(text="x: " + str(e.x) + " y: " + str(e.y))
 
-    def valid_move(self, type, old_coords, new_coords):
+    def valid_move(self, piece_type, piece_color, old_coords, new_coords):
         if not old_coords:
             return True
+        if (piece_color  == self.player_1_color and self.player != 1) or \
+                (piece_color != self.player_1_color  and self.player == 1):
+            return False
+
         y1, x1 = old_coords[0], old_coords[1]
         y2, x2 = new_coords[0], new_coords[1]
         player = self.player
         take = True if self.coords_pieces[new_coords] else False
-        if type == "pawn":
+        if piece_type == "pawn":
             # One move forward
             if not take and ((x1 == x2 and y1 == y2+1 and player == 1) or
                     (x1 == x2 and y1 == y2-1 and player == 2)):
@@ -197,6 +203,11 @@ class GameBoard(Frame):
             elif take and ((abs(x1-x2) == 1 and y1 == y2+1 and player == 1)
                     or (abs(x1-x2) == 1 and y1 == y2-1 and player == 2)):
                 return True
+        if piece_type == "knight":
+            if (abs(x1-x2) == 2 and abs(y1-y2) == 1) or \
+               (abs(x1-x2) == 1 and abs(y1-y2) == 2):
+                return True
+
         return False
 
 
