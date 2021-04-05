@@ -209,13 +209,25 @@ class GameBoard(Frame):
             if abs(x1-x2) == abs(y1-y2):
                 # up and right movement
                 if x1 < x2 and y1 > y2:
-                    for i in range(abs(x1-x2)-1):
+                    for i in range(1, abs(x1-x2)):
                         if self.coords_pieces[(y1-i, x1+i)]:
                             return False
-                    return True
-
+                # down and right movement
+                elif x1 < x2 and y1 < y2:
+                    for i in range(1, abs(x1-x2)):
+                        if self.coords_pieces[(y1+i, x1+i)]:
+                            return False
+                # up and left movement
+                elif x1 > x2 and y1 > y2:
+                    for i in range(1, abs(x1-x2)):
+                        if self.coords_pieces[(y1-i,x1-i)]:
+                            return False
+                # down and left movement
+                elif x1 > x2 and y1 < y2:
+                    for i in range(1, abs(x1-x2)):
+                        if self.coords_pieces[(y1+i, x1-i)]:
+                            return False
                 return True
-
 
         return False
 
