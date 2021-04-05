@@ -2,6 +2,7 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 
+
 class GameBoard(Frame):
     def __init__(self, parent, rows=8, columns=8, size=64, color1="white",
                  color2="gray"):
@@ -33,7 +34,7 @@ class GameBoard(Frame):
         # changes the window size
         self.canvas.bind("<Configure>", self.refresh)
         self.canvas.bind("<Button-1>", self.select)
-        self.canvas.bind("<Motion>", self.move)
+        self.canvas.bind("<Motion>", self.cursor_coords)
 
     def add_piece(self, name, image, row=0, column=0):
         # Add a piece to the playing board'''
@@ -42,22 +43,24 @@ class GameBoard(Frame):
         self.place_piece(name, row, column)
 
     def place_piece(self, name, row, column):
-        # Place a piece at the given row/column
-        if self.coords_pieces[(row, column)]:
-            dead_piece = self.coords_pieces[(row, column)]
-            self.select_label.config(text=dead_piece)
-            self.canvas.delete((dead_piece, "piece"))
-            #TODO: find optimal solution
-            self.canvas.coords(dead_piece, -self.size, -self.size)
-
+        type = name.split("_")[1]
         old_coords = self.pieces_coords[name]
-        if old_coords:
-            self.coords_pieces[old_coords] = None
-        self.pieces_coords[name] = (row, column)
-        self.coords_pieces[(row, column)] = name
-        x0 = (column * self.size) + int(self.size/2)
-        y0 = (row * self.size) + int(self.size/2)
-        self.canvas.coords(name, x0, y0)
+        if self.valid_move(type, old_coords,(row, column)):
+            # if target square is occupied then delete the taken piece
+            if self.coords_pieces[(row, column)]:
+                dead_piece = self.coords_pieces[(row, column)]
+                # TODO:remove after debug
+                self.select_label.config(text=dead_piece)
+                # TODO: find optimal solution
+                self.canvas.coords(dead_piece, -self.size, -self.size)
+            # free previous square in coord_pieces dict
+            if old_coords:
+                self.coords_pieces[old_coords] = None
+            self.pieces_coords[name] = (row, column)
+            self.coords_pieces[(row, column)] = name
+            x0 = (column * self.size) + int(self.size/2)
+            y0 = (row * self.size) + int(self.size/2)
+            self.canvas.coords(name, x0, y0)
 
     def refresh(self, event):
         # Redraw the board, possibly in response to window being resized
@@ -162,14 +165,25 @@ class GameBoard(Frame):
             col = 7
         return row, col
 
-    def move(self, e):
+    def cursor_coords(self, e):
         self.coords_label.config(text="x: " + str(e.x) + " y: " + str(e.y))
+
+    def valid_move(self, type, old_coords, new_coords):
+        if not old_coords:
+            return True
+        y1, x1 = old_coords[0], old_coords[1]
+        y2, x2 = new_coords[0], new_coords[1]
+        if type == "pawn":
+            if x1 == x2 and y1== y2+1:
+                return True
+
+        return False
 
 if __name__ == "__main__":
     root = Tk()
     board = GameBoard(root)
     board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
     board.setup_board()
-
+    # Avoid window resizing
     root.resizable(0, 0)
     root.mainloop()
