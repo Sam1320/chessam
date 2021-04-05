@@ -177,6 +177,7 @@ class GameBoard(Frame):
         self.coords_label.config(text="x: " + str(e.x) + " y: " + str(e.y))
 
     def valid_move(self, piece_type, piece_color, old_coords, new_coords):
+        # TODO: avoid friendy fire
         if not old_coords:
             return True
         if (piece_color == self.player_1_color and self.player != 1) or \
@@ -196,6 +197,8 @@ class GameBoard(Frame):
             if self.valid_rook_move(x1, y1, x2, y2) or \
                     self.valid_bishop_move(x1, y1, x2, y2):
                 return True
+        elif piece_type == "king":
+            return self.valid_king_move(x1, y1, x2, y2)
 
         return False
 
@@ -251,7 +254,6 @@ class GameBoard(Frame):
         else:
             return False
 
-
     def valid_pawn_move(self, x1, y1, x2, y2):
         take = True if self.coords_pieces[(y2, x2)] else False
         player = self.player
@@ -275,6 +277,15 @@ class GameBoard(Frame):
         if (abs(x1 - x2) == 2 and abs(y1 - y2) == 1) or \
                 (abs(x1 - x2) == 1 and abs(y1 - y2) == 2):
             return True
+
+    def valid_king_move(self, x1, y1, x2, y2):
+        if abs(x1-x2) == 1 and abs(y1-y2) == 1 or \
+                x1 == x2 and abs(y1-y2) == 1 or \
+                y1 == y2 and abs(x1-x2) == 1:
+            return True
+        else:
+            return False
+
 if __name__ == "__main__":
     root = Tk()
     board = GameBoard(root)
