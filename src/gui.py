@@ -55,8 +55,6 @@ class GameBoard(Frame):
             # if target square is occupied then delete the taken piece
             if self.coords_pieces[(row, col)]:
                 dead_piece = self.coords_pieces[(row, col)]
-                # TODO:remove after debug
-                self.select_label.config(text=dead_piece)
                 # TODO: find optimal solution
                 self.canvas.coords(dead_piece, -self.size, -self.size)
             # free previous square in coord_pieces dict
@@ -203,10 +201,21 @@ class GameBoard(Frame):
             elif take and ((abs(x1-x2) == 1 and y1 == y2+1 and player == 1)
                     or (abs(x1-x2) == 1 and y1 == y2-1 and player == 2)):
                 return True
-        if piece_type == "knight":
+        elif piece_type == "knight":
             if (abs(x1-x2) == 2 and abs(y1-y2) == 1) or \
                (abs(x1-x2) == 1 and abs(y1-y2) == 2):
                 return True
+        elif piece_type == "bishop":
+            if abs(x1-x2) == abs(y1-y2):
+                # up and right movement
+                if x1 < x2 and y1 > y2:
+                    for i in range(abs(x1-x2)-1):
+                        if self.coords_pieces[(y1-i, x1+i)]:
+                            return False
+                    return True
+
+                return True
+
 
         return False
 
