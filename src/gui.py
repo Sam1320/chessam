@@ -220,7 +220,7 @@ class GameBoard(Frame):
                 # up and left movement
                 elif x1 > x2 and y1 > y2:
                     for i in range(1, abs(x1-x2)):
-                        if self.coords_pieces[(y1-i,x1-i)]:
+                        if self.coords_pieces[(y1-i, x1-i)]:
                             return False
                 # down and left movement
                 elif x1 > x2 and y1 < y2:
@@ -228,6 +228,33 @@ class GameBoard(Frame):
                         if self.coords_pieces[(y1+i, x1-i)]:
                             return False
                 return True
+
+        elif piece_type == "rook":
+            if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
+                # upward movement
+                if x1==x2 and y1 > y2:
+                    for i in range(1, abs(y1-y2)):
+                        if self.coords_pieces[(y1-i, x1)]:
+                            return False
+                # downward movement
+                elif x1==x2 and y1 < y2:
+                    for i in range(1, abs(y1-y2)):
+                        if self.coords_pieces[(y1+i, x1)]:
+                            return False
+                # rightward movement
+                elif x1 < x2 and y1 == y2:
+                    for i in range(1, abs(x1-x2)):
+                        if self.coords_pieces[(y1, x1+i)]:
+                            return False
+                # leftward movement
+                elif x1 > x2 and y1 == y2:
+                    for i in range(1, abs(x1-x2)):
+                        if self.coords_pieces[(y1, x1-i)]:
+                            return False
+                return True
+
+
+
 
         return False
 
