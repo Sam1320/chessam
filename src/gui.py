@@ -181,11 +181,18 @@ class GameBoard(Frame):
             return True
         y1, x1 = old_coords[0], old_coords[1]
         y2, x2 = new_coords[0], new_coords[1]
+        player = self.player
+        take = True if self.coords_pieces[new_coords] else False
         if type == "pawn":
-            if (x1 == x2 and y1 == y2+1 and self.player == 1) or \
-                    (x1 == x2 and y1 == y2-1 and self.player == 2):
+            if (x1 == x2 and y1 == y2+1 and player == 1) or \
+                    (x1 == x2 and y1 == y2-1 and player == 2):
                 return True
-
+            elif (x1 == x2 and y1 == y2+2 and player == 1) or \
+                    (x1 == x2 and y1 == y2-2 and player == 2):
+                return True
+            elif take and ((abs(x1-x2) == 1 and y1 == y2+1 and player == 1)\
+                    or (abs(x1-x2) == 1 and y1 == y2-1 and player == 2)):
+                return True
         return False
 
 
