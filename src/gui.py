@@ -184,12 +184,16 @@ class GameBoard(Frame):
         player = self.player
         take = True if self.coords_pieces[new_coords] else False
         if type == "pawn":
+            # One move forward
             if (x1 == x2 and y1 == y2+1 and player == 1) or \
                     (x1 == x2 and y1 == y2-1 and player == 2):
                 return True
-            elif (x1 == x2 and y1 == y2+2 and player == 1) or \
-                    (x1 == x2 and y1 == y2-2 and player == 2):
+            # Two moves forward and first move
+            elif (y1 == 1 or y1 == 6) and \
+                    ((x1 == x2 and y1 == y2+2 and player == 1)
+                     or (x1 == x2 and y1 == y2-2 and player == 2)):
                 return True
+            # One square diagonal and take
             elif take and ((abs(x1-x2) == 1 and y1 == y2+1 and player == 1)\
                     or (abs(x1-x2) == 1 and y1 == y2-1 and player == 2)):
                 return True
