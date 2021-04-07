@@ -323,11 +323,14 @@ class GameBoard(Frame):
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
                 if piece_color == color or \
-                   piece_type not in {"bishop", "queen", "pawn"}:
+                   piece_type in {"rook", "knight"} or  \
+                        piece_type == "pawn" and i > 1 or \
+                        piece_type == "king" and i > 1:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
-                            (piece_type == "pawn" and i == 1):
+                       (piece_type == "pawn" and i == 1) or \
+                       (piece_type == "king" and i == 1):
                         check = True
             i += 1
         # up and left
@@ -338,11 +341,14 @@ class GameBoard(Frame):
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
                 if piece_color == color or \
-                   piece_type not in {"bishop", "queen", "pawn"}:
+                   piece_type in {"rook", "knight"} or  \
+                        piece_type == "pawn" and i > 1 or \
+                        piece_type == "king" and i > 1:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
-                            (piece_type == "pawn" and i == 1):
+                       (piece_type == "pawn" and i == 1) or \
+                       (piece_type == "king" and i == 1):
                         check = True
             i += 1
         # down and right
@@ -353,11 +359,13 @@ class GameBoard(Frame):
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
                 if piece_color == color or \
-                   piece_type not in {"bishop", "queen", "pawn"}:
+                   piece_type in {"rook", "knight"} or  \
+                        piece_type == "pawn" and i > 1 or \
+                        piece_type == "king" and i > 1:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
-                            (piece_type == "pawn" and i == 1):
+                       (piece_type == "king" and i == 1):
                         check = True
             i += 1
         # down and left
@@ -368,11 +376,13 @@ class GameBoard(Frame):
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
                 if piece_color == color or \
-                   piece_type not in {"bishop", "queen", "pawn"}:
+                   piece_type in {"rook", "knight"} or  \
+                        piece_type == "pawn" and i > 1 or \
+                        piece_type == "king" and i > 1:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
-                            (piece_type == "pawn" and i == 1):
+                       (piece_type == "king" and i == 1):
                         check = True
             i += 1
         # check straight lines for rooks or queens
@@ -386,7 +396,8 @@ class GameBoard(Frame):
                 if piece_color == color or piece_type not in {"rook", "queen"}:
                     break
                 else:
-                    if piece_type in {"rook", "queen"}:
+                    if piece_type in {"rook", "queen"} or \
+                       piece_type == "king" and i == 1:
                         check = True
             i += 1
         # down
@@ -399,7 +410,8 @@ class GameBoard(Frame):
                 if piece_color == color:
                     break
                 else:
-                    if piece_type in {"rook", "queen"}:
+                    if piece_type in {"rook", "queen"} or \
+                       piece_type == "king" and i == 1:
                         check = True
             i += 1
         # right
@@ -412,7 +424,8 @@ class GameBoard(Frame):
                 if piece_color == color:
                     break
                 else:
-                    if piece_type in {"rook", "queen"}:
+                    if piece_type in {"rook", "queen"} or \
+                       piece_type == "king" and i == 1:
                         check = True
             i += 1
         # left
@@ -425,7 +438,8 @@ class GameBoard(Frame):
                 if piece_color == color:
                     break
                 else:
-                    if piece_type in {"rook", "queen"}:
+                    if piece_type in {"rook", "queen"} or \
+                       piece_type == "king" and i == 1:
                         check = True
             i += 1
         # check knight checks
