@@ -322,7 +322,8 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or \
+                   piece_type not in {"bishop", "queen", "pawn"}:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
@@ -336,7 +337,8 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or \
+                   piece_type not in {"bishop", "queen", "pawn"}:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
@@ -350,7 +352,8 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or \
+                   piece_type not in {"bishop", "queen", "pawn"}:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
@@ -364,7 +367,8 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or \
+                   piece_type not in {"bishop", "queen", "pawn"}:
                     break
                 else:
                     if (piece_type in {"bishop", "queen"}) or \
@@ -379,7 +383,7 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or piece_type not in {"rook", "queen"}:
                     break
                 else:
                     if piece_type in {"rook", "queen"}:
@@ -426,26 +430,27 @@ class GameBoard(Frame):
             i += 1
         # check knight checks
         # up
-        # piece1 = self.coords_pieces[(king_y-2, king_x+1)]
-        # piece2 = self.coords_pieces[(king_y-2, king_x-1)]
-        # # right
-        # piece3 = self.coords_pieces[(king_y+1, king_x+2)]
-        # piece4 = self.coords_pieces[(king_y-1, king_x+2)]
-        # # down
-        # piece5 = self.coords_pieces[(king_y+2, king_x-1)]
-        # piece6 = self.coords_pieces[(king_y+2, king_x+1)]
-        # # left
-        # piece7 = self.coords_pieces[(king_y+1, king_x-2)]
-        # piece8 = self.coords_pieces[(king_y-1, king_x-2)]
-        # if "knight" in piece1+piece2+piece3+piece4+piece5+piece6+piece7+piece8:
-        #     check = True
+        p1 = self.coords_pieces[(king_y-2, king_x+1)]
+        p2 = self.coords_pieces[(king_y-2, king_x-1)]
+        # right
+        p3 = self.coords_pieces[(king_y+1, king_x+2)]
+        p4 = self.coords_pieces[(king_y-1, king_x+2)]
+        # down
+        p5 = self.coords_pieces[(king_y+2, king_x-1)]
+        p6 = self.coords_pieces[(king_y+2, king_x+1)]
+        # left
+        p7 = self.coords_pieces[(king_y+1, king_x-2)]
+        p8 = self.coords_pieces[(king_y-1, king_x-2)]
+        opp_color = "white" if color == "black" else "black"
+        if opp_color+"_"+"knight" in str(p1)+str(p2)+str(p3)+str(p4)+str(p5) +\
+                str(p6)+str(p7)+str(p8):
+            check = True
 
         # restore position
         self.coords_pieces[(y2, x2)] = old_piece
         self.pieces_coords[old_piece] = (y2, x2)
         self.coords_pieces[(y1, x1)] = name
         self.pieces_coords[name] = (y1, x1)
-
 
         return check
 
