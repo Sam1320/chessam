@@ -90,6 +90,7 @@ class GameBoard(Frame):
         self.canvas.tag_lower("square")
 
     def select(self, e):
+        # TODO: fix selecting empty square bug
         if self.selected:
             row, col = self.coords_to_row_col(e.x, e.y)
             self.canvas.delete("selected")
@@ -324,15 +325,121 @@ class GameBoard(Frame):
                 if piece_color == color:
                     break
                 else:
-                    if piece_type in {"bishop", "queen"}:
-                        check = True
-                    elif piece_type == "pawn" and i == 1:
+                    if (piece_type in {"bishop", "queen"}) or \
+                            (piece_type == "pawn" and i == 1):
                         check = True
             i += 1
-            
+        # up and left
+        i = 1
+        while 0 <= king_y-i <= 7 and 0 <= king_x-i <= 7:
+            piece = self.coords_pieces[(king_y-i, king_x-i)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if (piece_type in {"bishop", "queen"}) or \
+                            (piece_type == "pawn" and i == 1):
+                        check = True
+            i += 1
+        # down and right
+        i = 1
+        while 0 <= king_y+i <= 7 and 0 <= king_x+i <= 7:
+            piece = self.coords_pieces[(king_y+i, king_x+i)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if (piece_type in {"bishop", "queen"}) or \
+                            (piece_type == "pawn" and i == 1):
+                        check = True
+            i += 1
+        # down and left
+        i = 1
+        while 0 <= king_y+i <= 7 and 0 <= king_x-i <= 7:
+            piece = self.coords_pieces[(king_y+i, king_x-i)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if (piece_type in {"bishop", "queen"}) or \
+                            (piece_type == "pawn" and i == 1):
+                        check = True
+            i += 1
         # check straight lines for rooks or queens
-
+        # up
+        i = 1
+        while 0 <= king_y-i <= 7:
+            piece = self.coords_pieces[(king_y-i, king_x)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if piece_type in {"rook", "queen"}:
+                        check = True
+            i += 1
+        # down
+        i = 1
+        while 0 <= king_y+i <= 7:
+            piece = self.coords_pieces[(king_y+i, king_x)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if piece_type in {"rook", "queen"}:
+                        check = True
+            i += 1
+        # right
+        i = 1
+        while 0 <= king_x+i <= 7:
+            piece = self.coords_pieces[(king_y, king_x+i)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if piece_type in {"rook", "queen"}:
+                        check = True
+            i += 1
+        # left
+        i = 1
+        while 0 <= king_x-i <= 7:
+            piece = self.coords_pieces[(king_y, king_x-i)]
+            if piece:
+                piece_color = piece.split("_")[0]
+                piece_type = piece.split("_")[1]
+                if piece_color == color:
+                    break
+                else:
+                    if piece_type in {"rook", "queen"}:
+                        check = True
+            i += 1
         # check knight checks
+        # up
+        # piece1 = self.coords_pieces[(king_y-2, king_x+1)]
+        # piece2 = self.coords_pieces[(king_y-2, king_x-1)]
+        # # right
+        # piece3 = self.coords_pieces[(king_y+1, king_x+2)]
+        # piece4 = self.coords_pieces[(king_y-1, king_x+2)]
+        # # down
+        # piece5 = self.coords_pieces[(king_y+2, king_x-1)]
+        # piece6 = self.coords_pieces[(king_y+2, king_x+1)]
+        # # left
+        # piece7 = self.coords_pieces[(king_y+1, king_x-2)]
+        # piece8 = self.coords_pieces[(king_y-1, king_x-2)]
+        # if "knight" in piece1+piece2+piece3+piece4+piece5+piece6+piece7+piece8:
+        #     check = True
+
         # restore position
         self.coords_pieces[(y2, x2)] = old_piece
         self.pieces_coords[old_piece] = (y2, x2)
