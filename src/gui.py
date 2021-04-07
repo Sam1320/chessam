@@ -185,6 +185,15 @@ class GameBoard(Frame):
             return False
         y1, x1 = old_coords[0], old_coords[1]
         y2, x2 = new_coords[0], new_coords[1]
+        
+        # Own pieces can't be taken
+        take = True if self.coords_pieces[(y2, x2)] else False
+        if take:
+            color_taken = self.coords_pieces[(y2, x2)].split("_")[0]
+            if self.player == 1 and self.player_1_color == color_taken or \
+                    self.player == 2 and self.player_1_color != color_taken:
+                return False
+
         if piece_type == "pawn":
             return self.valid_pawn_move(x1, y1, x2, y2)
         elif piece_type == "knight":
@@ -228,7 +237,7 @@ class GameBoard(Frame):
         else:
             return False
 
-    def valid_bishop_move(self, x1,y1,x2,y2):
+    def valid_bishop_move(self, x1, y1, x2, y2):
         if abs(x1 - x2) == abs(y1 - y2):
             # up and right movement
             if x1 < x2 and y1 > y2:
@@ -285,6 +294,10 @@ class GameBoard(Frame):
             return True
         else:
             return False
+
+    def check(self, x1, y1, x2, y2):
+        pass
+
 
 if __name__ == "__main__":
     root = Tk()
