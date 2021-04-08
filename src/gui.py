@@ -70,10 +70,11 @@ class GameBoard(Frame):
                 self.coords_pieces[old_coords] = None
             if (row == 7 or row == 0) and name.split("_")[1] == "pawn":
                 # TODO: pawn promotion
+                color = "white" if self.player_1_color == "white" and self.player == 1 else "black"
                 self.promote_queen_button = Button(
-                    image=self.images_dic["white_queen"],
+                    image=self.images_dic[color+"_queen"],
                     command=lambda: self.promote_queen(name, row, col))
-                
+
                 self.promote_queen_button.pack()
             else:
                 self.pieces_coords[name] = (row, col)
@@ -326,6 +327,7 @@ class GameBoard(Frame):
         self.coords_pieces[(y1, x1)] = None
         # place piece
         self.coords_pieces[(y2, x2)] = name
+        # TODO: Fix logic
         color = self.player_1_color if self.player == 1 else "black"
         # find out kings position
         king_y, king_x = tuple(self.pieces_coords[color+"_"+"king"])
@@ -491,8 +493,9 @@ class GameBoard(Frame):
         # self.add_piece(new_name,
         #                self.images_dic[self.color1+"_queen"],
         #                row, col)
+        color = "black" if self.player_1_color == "white" and self.player == 1 else "white"
         self.canvas.create_image(0, 0,
-                                 image=self.images_dic[self.color1+"_queen"],
+                                 image=self.images_dic[color+"_queen"],
                                  tags=(new_name, "piece"),
                                  anchor="c")
         self.pieces_coords[new_name] = (row, col)
@@ -500,6 +503,7 @@ class GameBoard(Frame):
         x0 = (col * self.size) + int(self.size / 2)
         y0 = (row * self.size) + int(self.size / 2)
         self.canvas.coords(new_name, x0, y0)
+        self.promote_queen_button.destroy()
 
 
 
