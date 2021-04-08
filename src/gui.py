@@ -25,11 +25,11 @@ class GameBoard(Frame):
         self.coords_pieces = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
         self.coords_label = Label(text="")
-        self.coords_label.pack(side="bottom", pady=1)
+        self.coords_label.grid(row=2, column=1, pady=1)
         self.turn_label = Label(text="Turn: Player 1")
         self.select_label = Label(text="row:  col:  ")
-        self.select_label.pack(side="bottom", pady=1)
-        self.turn_label.pack(side="bottom", pady=1)
+        self.select_label.grid(row=2, column=2, pady=1)
+        self.turn_label.grid(row=2, column=3, pady=1)
         canvas_width = columns * size
         canvas_height = rows * size
         self.selected = False
@@ -40,13 +40,14 @@ class GameBoard(Frame):
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
                              width=canvas_width, height=canvas_height,
                              background="bisque")
-        self.canvas.pack(side="top", fill="both", expand=True, padx=2, pady=2)
+        self.canvas.grid(row=0, columnspan=6, padx=2, pady=2)
 
         # This binding will cause a refresh if the user interactively
         # changes the window size
         self.canvas.bind("<Configure>", self.refresh)
         self.canvas.bind("<Button-1>", self.select)
         self.canvas.bind("<Motion>", self.cursor_coords)
+
 
     def add_piece(self, name, image, row=0, column=0):
         # Add a piece to the playing board'''
@@ -73,9 +74,20 @@ class GameBoard(Frame):
                 color = "white" if self.player_1_color == "white" and self.player == 1 else "black"
                 self.promote_queen_button = Button(
                     image=self.images_dic[color+"_queen"],
-                    command=lambda: self.promote_queen(name, row, col))
-
-                self.promote_queen_button.pack()
+                    command=lambda: self.promote(name, "queen", row, col))
+                self.promote_knight_button = Button(
+                    image=self.images_dic[color+"_knight"],
+                    command=lambda: self.promote(name, "knight", row, col))
+                self.promote_rook_button = Button(
+                    image=self.images_dic[color+"_rook"],
+                    command=lambda: self.promote(name, "rook", row, col))
+                self.promote_bishop_button = Button(
+                    image=self.images_dic[color+"_bishop"],
+                    command=lambda: self.promote(name, "bishop", row, col))
+                self.promote_knight_button.grid(row=1, column=1, sticky="ew")
+                self.promote_queen_button.grid(row=1, column=2, sticky="ew")
+                self.promote_rook_button.grid(row=1, column=3, sticky="ew")
+                self.promote_bishop_button.grid(row=1, column=4, sticky="ew")
             else:
                 self.pieces_coords[name] = (row, col)
                 self.coords_pieces[(row, col)] = name
@@ -486,16 +498,13 @@ class GameBoard(Frame):
 
         return check
 
-    def promote_queen(self, name, row, col):
+    def promote(self, name, new_type, row, col):
         self.canvas.coords(name, -self.size, -self.size)
 
-        new_name = self.color1+"_queen_promoted_"+str(row)+str(col)
-        # self.add_piece(new_name,
-        #                self.images_dic[self.color1+"_queen"],
-        #                row, col)
+        new_name = self.color1+"_"+new_type+"_promoted_"+str(row)+str(col)
         color = "black" if self.player_1_color == "white" and self.player == 1 else "white"
         self.canvas.create_image(0, 0,
-                                 image=self.images_dic[color+"_queen"],
+                                 image=self.images_dic[color+"_"+new_type],
                                  tags=(new_name, "piece"),
                                  anchor="c")
         self.pieces_coords[new_name] = (row, col)
@@ -504,15 +513,16 @@ class GameBoard(Frame):
         y0 = (row * self.size) + int(self.size / 2)
         self.canvas.coords(new_name, x0, y0)
         self.promote_queen_button.destroy()
-
-
-
+        self.promote_knight_button.destroy()
+        self.promote_bishop_button.destroy()
+        self.promote_rook_button.destroy()
 
 
 if __name__ == "__main__":
     root = Tk()
     board = GameBoard(root)
-    board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
+    #board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
+    board.grid(row=0, columnspan=6, padx=4, pady=4)
     board.setup_board()
     # Avoid window resizing
     root.resizable(0, 0)
