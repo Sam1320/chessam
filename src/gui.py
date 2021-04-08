@@ -2,6 +2,14 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 
+# TODO: checkmate
+# TODO: stalemate
+# TODO: en passant
+# TODO: add scores
+# TODO: add clocks
+# TODO: reset button
+# TODO: change pieces icons
+
 
 class GameBoard(Frame):
     def __init__(self, parent, rows=8, columns=8, size=64, color1="white",
@@ -60,11 +68,19 @@ class GameBoard(Frame):
             # free previous square in coord_pieces dict
             if old_coords:
                 self.coords_pieces[old_coords] = None
-            self.pieces_coords[name] = (row, col)
-            self.coords_pieces[(row, col)] = name
-            x0 = (col * self.size) + int(self.size/2)
-            y0 = (row * self.size) + int(self.size/2)
-            self.canvas.coords(name, x0, y0)
+            if (row == 7 or row == 0) and name.split("_")[1] == "pawn":
+                # TODO: pawn promotion
+                self.promote_queen_button = Button(
+                    image=self.images_dic["white_queen"],
+                    command=lambda: self.promote_queen(name, row, col))
+                
+                self.promote_queen_button.pack()
+            else:
+                self.pieces_coords[name] = (row, col)
+                self.coords_pieces[(row, col)] = name
+                x0 = (col * self.size) + int(self.size/2)
+                y0 = (row * self.size) + int(self.size/2)
+                self.canvas.coords(name, x0, y0)
         return valid
 
     def refresh(self, event):
@@ -468,7 +484,22 @@ class GameBoard(Frame):
 
         return check
 
+    def promote_queen(self, name, row, col):
+        self.canvas.coords(name, -self.size, -self.size)
 
+        new_name = self.color1+"_queen_promoted_"+str(row)+str(col)
+        # self.add_piece(new_name,
+        #                self.images_dic[self.color1+"_queen"],
+        #                row, col)
+        self.canvas.create_image(0, 0,
+                                 image=self.images_dic[self.color1+"_queen"],
+                                 tags=(new_name, "piece"),
+                                 anchor="c")
+        self.pieces_coords[new_name] = (row, col)
+        self.coords_pieces[(row, col)] = new_name
+        x0 = (col * self.size) + int(self.size / 2)
+        y0 = (row * self.size) + int(self.size / 2)
+        self.canvas.coords(new_name, x0, y0)
 
 
 
