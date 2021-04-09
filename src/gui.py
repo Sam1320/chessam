@@ -208,6 +208,10 @@ class GameBoard(Frame):
     def cursor_coords(self, e):
         self.coords_label.config(text=f"x:{str(e.x)}\ty: {str(e.y)}", width=20)
 
+    def current_color(self):
+        return "white" if self.player_1_color == "white" and \
+                          self.player == 1 else "black"
+
     def valid_move(self, name, old_coords, new_coords):
         piece_type = name.split("_")[1]
         piece_color = name.split("_")[0]
@@ -228,7 +232,8 @@ class GameBoard(Frame):
                     self.player == 2 and self.player_1_color != color_taken:
                 return False
         # The move can't result in your own king being checked
-        if self.checked(name, x1, y1, x2, y2):
+        color = self.current_color()
+        if self.checked(name, x1, y1, x2, y2, color):
             return False
         if piece_type == "pawn":
             return self.valid_pawn_move(x1, y1, x2, y2, take)
@@ -337,7 +342,7 @@ class GameBoard(Frame):
         else:
             return False
 
-    def checked(self, name, x1, y1, x2, y2):
+    def checked(self, name, x1, y1, x2, y2, color):
         # assume no check
         check = False
         # save taken piece
@@ -350,7 +355,6 @@ class GameBoard(Frame):
         # place piece
         self.coords_pieces[(y2, x2)] = name
         # TODO: Fix logic
-        color = self.player_1_color if self.player == 1 else "black"
         # find out kings position
         king_y, king_x = tuple(self.pieces_coords[color+"_"+"king"])
 
@@ -511,7 +515,7 @@ class GameBoard(Frame):
     def promote(self, name, new_type, row, col):
         self.canvas.coords(name, -self.size, -self.size)
 
-        color = "black" if self.player_1_color == "white" and self.player == 1 else "white"
+        color = "white" if self.current_color() == "black" else "black"
         new_name = color+"_"+new_type+"_promoted_"+str(row)+str(col)
         self.canvas.create_image(0, 0,
                                  image=self.images_dic[color+"_"+new_type],
