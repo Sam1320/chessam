@@ -3,6 +3,7 @@ from utilities.images_dict import Images
 from collections import defaultdict
 
 # TODO: checkmate
+    # TODO: king cant take checking bishop
 # TODO: stalemate
 # TODO: en passant
 # TODO: add scores
@@ -24,8 +25,8 @@ class GameBoard(Frame):
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
-        self.coords_label = Label(text="", width=20)
-        self.coords_label.grid(row=2, column=1, pady=1)
+        self.check_label = Label(text="No checks", width=20)
+        self.check_label.grid(row=2, column=1, pady=1)
         self.turn_label = Label(text="Turn: Player 1", width=20)
         self.select_label = Label(text="row:  col:  ", width=20)
         self.select_label.grid(row=2, column=2, pady=1)
@@ -36,6 +37,7 @@ class GameBoard(Frame):
         self.selected_piece = None
         self.player = 1
         self.player_1_color = "white"
+        self.check = False
 
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
                              width=canvas_width, height=canvas_height,
@@ -46,7 +48,6 @@ class GameBoard(Frame):
         # changes the window size
         self.canvas.bind("<Configure>", self.refresh)
         self.canvas.bind("<Button-1>", self.select)
-        self.canvas.bind("<Motion>", self.cursor_coords)
 
     def add_piece(self, name, image, row=0, column=0):
         # Add a piece to the playing board'''
@@ -67,6 +68,13 @@ class GameBoard(Frame):
                 self.pieces_coords[dead_piece] = None
             # free previous square in coord_pieces dict
             if old_coords:
+                if self.checked(name, old_coords[1], old_coords[0], col, row, self.opponent_color()):
+                    #self.do_check()
+                    self.check = True
+                    self.check_label.config(text="CHECK MOTHEFUCKER!")
+                else:
+                    self.check_label.config(text="no checks")
+
                 self.coords_pieces[old_coords] = None
             if (row == 7 or row == 0) and name.split("_")[1] == "pawn":
                 self.pawn_promotion(name, row, col)
@@ -76,11 +84,20 @@ class GameBoard(Frame):
                 x0 = (col * self.size) + int(self.size/2)
                 y0 = (row * self.size) + int(self.size/2)
                 self.canvas.coords(name, x0, y0)
+
+
         return valid
 
+    def do_check(self):
+        self.check = True
+        self.check_label.config(text="CHECK MOTHEFUCKER!")
+
+    def undo_check(self):
+        self.check = False
+        self.check_label.config(text="")
+
     def pawn_promotion(self, name, row, col):
-        color = "white" if self.player_1_color == "white" and self.player ==\
-                           1 else "black"
+        color = self.current_color()
         self.promote_queen_button = Button(
             image=self.images_dic[color + "_queen"],
             command=lambda: self.promote(name, "queen", row, col))
@@ -205,12 +222,12 @@ class GameBoard(Frame):
             col = 7
         return row, col
 
-    def cursor_coords(self, e):
-        self.coords_label.config(text=f"x:{str(e.x)}\ty: {str(e.y)}", width=20)
-
     def current_color(self):
         return "white" if self.player_1_color == "white" and \
                           self.player == 1 else "black"
+
+    def opponent_color(self):
+        return "black" if self.current_color() == "white" else "white"
 
     def valid_move(self, name, old_coords, new_coords):
         piece_type = name.split("_")[1]
@@ -499,8 +516,8 @@ class GameBoard(Frame):
         # left
         p7 = self.coords_pieces[(king_y+1, king_x-2)]
         p8 = self.coords_pieces[(king_y-1, king_x-2)]
-        opp_color = "white" if color == "black" else "black"
-        if opp_color+"_"+"knight" in str(p1)+str(p2)+str(p3)+str(p4)+str(p5) +\
+        opp_king_color = "white" if color == "black" else "black"
+        if opp_king_color+"_"+"knight" in str(p1)+str(p2)+str(p3)+str(p4)+str(p5) +\
                 str(p6)+str(p7)+str(p8):
             check = True
 
