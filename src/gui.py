@@ -2,7 +2,6 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 
-# TODO: fix promoted black pieces not moving
 # TODO: checkmate
 # TODO: stalemate
 # TODO: en passant
@@ -49,7 +48,6 @@ class GameBoard(Frame):
         self.canvas.bind("<Button-1>", self.select)
         self.canvas.bind("<Motion>", self.cursor_coords)
 
-
     def add_piece(self, name, image, row=0, column=0):
         # Add a piece to the playing board'''
         self.canvas.create_image(0, 0, image=image, tags=(name, "piece"),
@@ -71,24 +69,7 @@ class GameBoard(Frame):
             if old_coords:
                 self.coords_pieces[old_coords] = None
             if (row == 7 or row == 0) and name.split("_")[1] == "pawn":
-                # TODO: pawn promotion
-                color = "white" if self.player_1_color == "white" and self.player == 1 else "black"
-                self.promote_queen_button = Button(
-                    image=self.images_dic[color+"_queen"],
-                    command=lambda: self.promote(name, "queen", row, col))
-                self.promote_knight_button = Button(
-                    image=self.images_dic[color+"_knight"],
-                    command=lambda: self.promote(name, "knight", row, col))
-                self.promote_rook_button = Button(
-                    image=self.images_dic[color+"_rook"],
-                    command=lambda: self.promote(name, "rook", row, col))
-                self.promote_bishop_button = Button(
-                    image=self.images_dic[color+"_bishop"],
-                    command=lambda: self.promote(name, "bishop", row, col))
-                self.promote_knight_button.grid(row=1, column=1, sticky="ew")
-                self.promote_queen_button.grid(row=1, column=2, sticky="ew")
-                self.promote_rook_button.grid(row=1, column=3, sticky="ew")
-                self.promote_bishop_button.grid(row=1, column=4, sticky="ew")
+                self.pawn_promotion(name, row, col)
             else:
                 self.pieces_coords[name] = (row, col)
                 self.coords_pieces[(row, col)] = name
@@ -96,6 +77,26 @@ class GameBoard(Frame):
                 y0 = (row * self.size) + int(self.size/2)
                 self.canvas.coords(name, x0, y0)
         return valid
+
+    def pawn_promotion(self, name, row, col):
+        color = "white" if self.player_1_color == "white" and self.player ==\
+                           1 else "black"
+        self.promote_queen_button = Button(
+            image=self.images_dic[color + "_queen"],
+            command=lambda: self.promote(name, "queen", row, col))
+        self.promote_knight_button = Button(
+            image=self.images_dic[color + "_knight"],
+            command=lambda: self.promote(name, "knight", row, col))
+        self.promote_rook_button = Button(
+            image=self.images_dic[color + "_rook"],
+            command=lambda: self.promote(name, "rook", row, col))
+        self.promote_bishop_button = Button(
+            image=self.images_dic[color + "_bishop"],
+            command=lambda: self.promote(name, "bishop", row, col))
+        self.promote_knight_button.grid(row=1, column=1, sticky="ew")
+        self.promote_queen_button.grid(row=1, column=2, sticky="ew")
+        self.promote_rook_button.grid(row=1, column=3, sticky="ew")
+        self.promote_bishop_button.grid(row=1, column=4, sticky="ew")
 
     def refresh(self, event):
         # Redraw the board, possibly in response to window being resized
@@ -245,6 +246,14 @@ class GameBoard(Frame):
             return self.valid_king_move(x1, y1, x2, y2)
 
         return False
+    def check(self, name, old_coords, new_coords):
+        # piece_type = name.split("_")[1]
+        # piece_color = name.split("_")[0]
+        # y1, x1 = old_coords[0], old_coords[1]
+        # y2, x2 = new_coords[0], new_coords[1]
+        # if piece_type == "queen":
+        pass
+
 
     def valid_rook_move(self, x1, y1, x2, y2):
         if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
