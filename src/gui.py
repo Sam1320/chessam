@@ -2,6 +2,7 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 
+# TODO: fix promoted black pieces not moving
 # TODO: checkmate
 # TODO: stalemate
 # TODO: en passant
@@ -24,10 +25,10 @@ class GameBoard(Frame):
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
-        self.coords_label = Label(text="")
+        self.coords_label = Label(text="", width=20)
         self.coords_label.grid(row=2, column=1, pady=1)
-        self.turn_label = Label(text="Turn: Player 1")
-        self.select_label = Label(text="row:  col:  ")
+        self.turn_label = Label(text="Turn: Player 1", width=20)
+        self.select_label = Label(text="row:  col:  ", width=20)
         self.select_label.grid(row=2, column=2, pady=1)
         self.turn_label.grid(row=2, column=3, pady=1)
         canvas_width = columns * size
@@ -204,7 +205,7 @@ class GameBoard(Frame):
         return row, col
 
     def cursor_coords(self, e):
-        self.coords_label.config(text="x: " + str(e.x) + " y: " + str(e.y))
+        self.coords_label.config(text=f"x:{str(e.x)}\ty: {str(e.y)}", width=20)
 
     def valid_move(self, name, old_coords, new_coords):
         piece_type = name.split("_")[1]
@@ -501,8 +502,8 @@ class GameBoard(Frame):
     def promote(self, name, new_type, row, col):
         self.canvas.coords(name, -self.size, -self.size)
 
-        new_name = self.color1+"_"+new_type+"_promoted_"+str(row)+str(col)
         color = "black" if self.player_1_color == "white" and self.player == 1 else "white"
+        new_name = color+"_"+new_type+"_promoted_"+str(row)+str(col)
         self.canvas.create_image(0, 0,
                                  image=self.images_dic[color+"_"+new_type],
                                  tags=(new_name, "piece"),
