@@ -3,7 +3,6 @@ from utilities.images_dict import Images
 from collections import defaultdict
 
 # TODO: checkmate
-    # TODO: king cant take checking bishop
 # TODO: stalemate
 # TODO: en passant
 # TODO: add scores
@@ -69,9 +68,11 @@ class GameBoard(Frame):
             # free previous square in coord_pieces dict
             if old_coords:
                 if self.checked(name, old_coords[1], old_coords[0], col, row, self.opponent_color()):
-                    #self.do_check()
-                    self.check = True
-                    self.check_label.config(text="CHECK MOTHEFUCKER!")
+                    if not self.protect_king_possible(name, old_coords[1], old_coords[0], col, row):
+                        self.check_label.config(text="CHECKMATE!")
+                    else:
+                        self.check = True
+                        self.check_label.config(text="CHECK!")
                 else:
                     self.check_label.config(text="no checks")
 
@@ -85,16 +86,23 @@ class GameBoard(Frame):
                 y0 = (row * self.size) + int(self.size/2)
                 self.canvas.coords(name, x0, y0)
 
-
         return valid
 
-    def do_check(self):
-        self.check = True
-        self.check_label.config(text="CHECK MOTHEFUCKER!")
+    def protect_king_possible(self, name, x1, y1, x2, y2):
+        return True
+        # return self.block_possible(name, x1, y1, x2, y2) or \
+        #        self.move_possible(name, x1, y1, x2, y2) or \
+        #        self.take_possible(name, x1, y1, x2, y2)
 
-    def undo_check(self):
-        self.check = False
-        self.check_label.config(text="")
+    def block_possible(self, name,  x1, y1, x2, y2):
+        pass
+
+    def move_possible(self, name,  x1, y1, x2, y2):
+        pass
+
+    def take_possible(self, name,  x1, y1, x2, y2):
+        pass
+
 
     def pawn_promotion(self, name, row, col):
         color = self.current_color()
