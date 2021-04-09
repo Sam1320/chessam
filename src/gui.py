@@ -260,6 +260,7 @@ class GameBoard(Frame):
             return self.valid_bishop_move(x1, y1, x2, y2)
         elif piece_type == "rook":
             return self.valid_rook_move(x1, y1, x2, y2)
+        # TODO: refactor for consistency
         elif piece_type == "queen":
             if self.valid_rook_move(x1, y1, x2, y2) or \
                     self.valid_bishop_move(x1, y1, x2, y2):
@@ -468,7 +469,7 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or (piece_type not in {"rook", "queen"}):
                     break
                 else:
                     if piece_type in {"rook", "queen"} or \
@@ -482,7 +483,7 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or (piece_type not in {"rook", "queen"}):
                     break
                 else:
                     if piece_type in {"rook", "queen"} or \
@@ -496,7 +497,7 @@ class GameBoard(Frame):
             if piece:
                 piece_color = piece.split("_")[0]
                 piece_type = piece.split("_")[1]
-                if piece_color == color:
+                if piece_color == color or (piece_type not in {"rook", "queen"}):
                     break
                 else:
                     if piece_type in {"rook", "queen"} or \
