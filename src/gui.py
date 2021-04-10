@@ -9,6 +9,7 @@ from collections import defaultdict
 # TODO: add clocks
 # TODO: reset button
 # TODO: change pieces icons
+# TODO: create piece object and delegate responsibilities
 
 
 class GameBoard(Frame):
@@ -89,20 +90,65 @@ class GameBoard(Frame):
         return valid
 
     def protect_king_possible(self, name, x1, y1, x2, y2):
-        return True
-        # return self.block_possible(name, x1, y1, x2, y2) or \
+         return self.block_possible(name, x1, y1, x2, y2) # or \
         #        self.move_possible(name, x1, y1, x2, y2) or \
         #        self.take_possible(name, x1, y1, x2, y2)
 
     def block_possible(self, name,  x1, y1, x2, y2):
-        pass
+        block = False
+        piece_type = name.split("_")[1]
+        piece_color = name.split("_")[0]
+        # determine the direction of the check
+        king_y, king_x = tuple(self.pieces_coords[self.opponent_color()+"_"+"king"])
+        up = True if king_y < y2 else False
+        down = True if king_y > y2 else False
+        left = True if king_x < x2 else False
+        right = True if king_x > x2 else False
 
-    def move_possible(self, name,  x1, y1, x2, y2):
+        # Chevysev distance (can't block if it is one square away)
+        distance = max(abs(king_x-x2), abs(king_y-y2))
+        if distance == 1:
+            return False
+        # can't block knight attacks
+        elif piece_type == "knight":
+            return False
+        else:
+            for i in range(1, distance):
+                if up and not (left or right):
+                    x, y = x2, y2-i
+                elif up and right:
+                    x, y = x2+i, y2-i
+                elif right and not (up or down):
+                    x, y = x2+i, y2
+                elif down and right:
+                    x, y = x2+i, y2+i
+                elif down and not (left or right):
+                    x, y = x2, y2+i
+                elif down and left:
+                    x, y = x2-i, y2+i
+                elif left and not (up or down):
+                    x, y = x2-i, y2
+                else: #up and left
+                    x, y = x2-i, y2-i
+                block = self.move_possible(x, y)
+                if block:
+                    break
+        return block
+
+    def evade_possible(self, name,  x1, y1, x2, y2):
         pass
 
     def take_possible(self, name,  x1, y1, x2, y2):
         pass
 
+    def move_possible(self, x, y):
+        block = False
+        for piece, coords in self.pieces_coords.items():
+            if self.current_color() in piece:
+                block = piece.move(x, y)
+                if block:
+                    break
+        return block
 
     def pawn_promotion(self, name, row, col):
         color = self.current_color()
@@ -277,13 +323,6 @@ class GameBoard(Frame):
             return self.valid_king_move(x1, y1, x2, y2)
 
         return False
-    def check(self, name, old_coords, new_coords):
-        # piece_type = name.split("_")[1]
-        # piece_color = name.split("_")[0]
-        # y1, x1 = old_coords[0], old_coords[1]
-        # y2, x2 = new_coords[0], new_coords[1]
-        # if piece_type == "queen":
-        pass
 
 
     def valid_rook_move(self, x1, y1, x2, y2):
@@ -361,9 +400,7 @@ class GameBoard(Frame):
             return True
 
     def valid_king_move(self, x1, y1, x2, y2):
-        if abs(x1-x2) == 1 and abs(y1-y2) == 1 or \
-                x1 == x2 and abs(y1-y2) == 1 or \
-                y1 == y2 and abs(x1-x2) == 1:
+        if max(abs(x1-x2), abs(y1-y2)) == 1:
             return True
         else:
             return False
