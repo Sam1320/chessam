@@ -60,13 +60,6 @@ class GameBoard(Frame):
         old_coords = self.pieces_coords[name]
         valid = self.valid_move(name, old_coords,(row, col))
         if valid:
-            # if target square is occupied then delete the taken piece
-            if self.coords_pieces[(row, col)]:
-                dead_piece = self.coords_pieces[(row, col)]
-                # TODO: find optimal solution
-                self.canvas.coords(dead_piece, -self.size, -self.size)
-                self.pieces_coords[dead_piece] = None
-            # free previous square in coord_pieces dict
             if old_coords:
                 if self.checked(name, old_coords[1], old_coords[0], col, row, self.opponent_color()):
                     if not self.protect_king_possible(name, old_coords[1], old_coords[0], col, row):
@@ -78,6 +71,13 @@ class GameBoard(Frame):
                     self.check_label.config(text="no checks")
 
                 self.coords_pieces[old_coords] = None
+            # if target square is occupied then delete the taken piece
+            if self.coords_pieces[(row, col)]:
+                dead_piece = self.coords_pieces[(row, col)]
+                # TODO: find optimal solution
+                self.canvas.coords(dead_piece, -self.size, -self.size)
+                # free previous square in coord_pieces dict
+                self.pieces_coords[dead_piece] = None
             if (row == 7 or row == 0) and name.split("_")[1] == "pawn":
                 self.pawn_promotion(name, row, col)
             else:
@@ -130,7 +130,7 @@ class GameBoard(Frame):
                     x, y = x2-i, y2
                 else: #up and left
                     x, y = x2-i, y2-i
-                block = self.move_possible(x, y)
+                block = self.move_possible(x, y, self.opponent_color())
                 if block:
                     break
         return block
@@ -141,11 +141,26 @@ class GameBoard(Frame):
     def take_possible(self, name,  x1, y1, x2, y2):
         pass
 
-    def move_possible(self, x, y):
+    def move_possible(self, x, y, color):
         block = False
+        player = 2 if self.player == 1 else 1
         for piece, coords in self.pieces_coords.items():
-            if self.current_color() in piece:
-                block = piece.move(x, y)
+            if not piece or not coords:
+                continue
+            piece_type = piece.split("_")[1]
+            piece_color = piece.split("_")[0]
+            y1, x1 = coords[0], coords[1]
+            if color == piece_color:
+                if piece_type == "pawn":
+                    block = self.valid_pawn_move(x1, y1, x, y, False, player)
+                elif piece_type == "knight":
+                    block = self.valid_knight_move(x1, y1, x, y)
+                elif piece_type == "rook":
+                    block = self.valid_rook_move(x1, y1, x, y)
+                elif piece_type == "bishop":
+                    block = self.valid_bishop_move(x1, y1, x, y)
+                elif piece_type == "queen":
+                    block = self.valid_queen_move(x1, y1, x, y)
                 if block:
                     break
         return block
@@ -307,23 +322,19 @@ class GameBoard(Frame):
         if self.checked(name, x1, y1, x2, y2, color):
             return False
         if piece_type == "pawn":
-            return self.valid_pawn_move(x1, y1, x2, y2, take)
+            return self.valid_pawn_move(x1, y1, x2, y2, take, self.player)
         elif piece_type == "knight":
             return self.valid_knight_move(x1, y1, x2, y2)
         elif piece_type == "bishop":
             return self.valid_bishop_move(x1, y1, x2, y2)
         elif piece_type == "rook":
             return self.valid_rook_move(x1, y1, x2, y2)
-        # TODO: refactor for consistency
         elif piece_type == "queen":
-            if self.valid_rook_move(x1, y1, x2, y2) or \
-                    self.valid_bishop_move(x1, y1, x2, y2):
-                return True
+            return self.valid_queen_move(x1, y1, x2, y2)
         elif piece_type == "king":
             return self.valid_king_move(x1, y1, x2, y2)
 
         return False
-
 
     def valid_rook_move(self, x1, y1, x2, y2):
         if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
@@ -351,6 +362,12 @@ class GameBoard(Frame):
         else:
             return False
 
+    def valid_queen_move(self, x1, y1, x2, y2):
+        if self.valid_rook_move(x1, y1, x2, y2) or \
+                self.valid_bishop_move(x1, y1, x2, y2):
+            return True
+        return False
+
     def valid_bishop_move(self, x1, y1, x2, y2):
         if abs(x1 - x2) == abs(y1 - y2):
             # up and right movement
@@ -377,8 +394,7 @@ class GameBoard(Frame):
         else:
             return False
 
-    def valid_pawn_move(self, x1, y1, x2, y2, take):
-        player = self.player
+    def valid_pawn_move(self, x1, y1, x2, y2, take, player):
         # One move forward
         if not take and ((x1 == x2 and y1 == y2 + 1 and player == 1) or
                          (x1 == x2 and y1 == y2 - 1 and player == 2)):
