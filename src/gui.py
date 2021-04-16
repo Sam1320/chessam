@@ -3,6 +3,7 @@ from utilities.images_dict import Images
 from collections import defaultdict
 
 # TODO: checkmate
+# TODO: castling
 # TODO: stalemate
 # TODO: en passant
 # TODO: add scores
@@ -61,8 +62,12 @@ class GameBoard(Frame):
         valid = self.valid_move(name, old_coords,(row, col))
         if valid:
             if old_coords:
-                if self.checked(name, old_coords[1], old_coords[0], col, row, self.opponent_color()):
-                    if not self.protect_king_possible(name, old_coords[1], old_coords[0], col, row):
+                # TODO: Massive refactoring. Verify checks after
+                #  the move instead of simulating multiple times
+                if self.checked(name, old_coords[1], old_coords[0], col, row,
+                                self.opponent_color()):
+                    if not self.protect_king_possible(name, old_coords[1],
+                                                      old_coords[0], col, row):
                         self.check_label.config(text="CHECKMATE!")
                     else:
                         self.check = True
@@ -90,28 +95,30 @@ class GameBoard(Frame):
         return valid
 
     def protect_king_possible(self, name, x1, y1, x2, y2):
-         return self.block_possible(name, x1, y1, x2, y2) # or \
-        #        self.move_possible(name, x1, y1, x2, y2) or \
+        return self.block_possible(name, x1, y1, x2, y2) or \
+                self.evade_possible(name, x1, y1, x2, y2) # \or
         #        self.take_possible(name, x1, y1, x2, y2)
 
-    def block_possible(self, name,  x1, y1, x2, y2):
-        block = False
+    def block_possible(self, name, x1,y1, x2, y2):
+        old_piece = self.coords_pieces[(y2, x2)]
+        self.pieces_coords[old_piece] = None
+        self.pieces_coords[name] = (y2, x2)
+        self.coords_pieces[(y1, x1)] = None
+        self.coords_pieces[(y2, x2)] = name
+
         piece_type = name.split("_")[1]
         piece_color = name.split("_")[0]
-        # determine the direction of the check
         king_y, king_x = tuple(self.pieces_coords[self.opponent_color()+"_"+"king"])
+        # determine the direction of the check
         up = True if king_y < y2 else False
         down = True if king_y > y2 else False
         left = True if king_x < x2 else False
         right = True if king_x > x2 else False
 
-        # Chevysev distance (can't block if it is one square away)
+        # can't block if it is one square away or if its a knight
         distance = max(abs(king_x-x2), abs(king_y-y2))
-        if distance == 1:
-            return False
-        # can't block knight attacks
-        elif piece_type == "knight":
-            return False
+        if distance == 1 or piece_type == "knight":
+            block = False
         else:
             for i in range(1, distance):
                 if up and not (left or right):
@@ -128,15 +135,50 @@ class GameBoard(Frame):
                     x, y = x2-i, y2+i
                 elif left and not (up or down):
                     x, y = x2-i, y2
-                else: #up and left
+                # up and left
+                else:
                     x, y = x2-i, y2-i
                 block = self.move_possible(x, y, self.opponent_color())
                 if block:
                     break
+        # restore position
+        self.coords_pieces[(y2, x2)] = old_piece
+        self.pieces_coords[old_piece] = (y2, x2)
+        self.coords_pieces[(y1, x1)] = name
+        self.pieces_coords[name] = (y1, x1)
         return block
 
-    def evade_possible(self, name,  x1, y1, x2, y2):
-        pass
+    def evade_possible(self, name, x1, y1, x2, y2):
+        evade = False
+        # simulate move
+        old_piece = self.coords_pieces[(y2, x2)]
+        self.pieces_coords[old_piece] = None
+        self.pieces_coords[name] = (y2, x2)
+        self.coords_pieces[(y1, x1)] = None
+        self.coords_pieces[(y2, x2)] = name
+
+        king_y, king_x = \
+            tuple(self.pieces_coords[self.opponent_color()+"_"+"king"])
+        for i, j in [(1, 1), (1, -1), (-1, 1), (-1, -1),
+                     (1, 0), (0, 1), (-1, 0), (0, -1)]:
+            taken = self.coords_pieces[(i, j)]
+            if taken:
+                color_taken = taken.split("_")[0]
+                if color_taken != self.opponent_color():
+                    evade = not self.checked(f"{self.opponent_color()}_king",
+                                 king_x, king_y, king_x+i, king_y+j,
+                                 self.opponent_color())
+                    if evade:
+                        break
+        # restore position
+        self.coords_pieces[(y2, x2)] = old_piece
+        self.pieces_coords[old_piece] = (y2, x2)
+        self.coords_pieces[(y1, x1)] = name
+        self.pieces_coords[name] = (y1, x1)
+
+        return evade
+
+
 
     def take_possible(self, name,  x1, y1, x2, y2):
         pass
@@ -310,6 +352,9 @@ class GameBoard(Frame):
             return False
         y1, x1 = old_coords[0], old_coords[1]
         y2, x2 = new_coords[0], new_coords[1]
+        # Can't place piece outside of the board
+        if not ((0 <= y2 <= 7) and (0 <= x2 <= 7)):
+            return False
         # Own pieces can't be taken
         take = True if self.coords_pieces[(y2, x2)] else False
         if take:
@@ -433,7 +478,6 @@ class GameBoard(Frame):
         self.coords_pieces[(y1, x1)] = None
         # place piece
         self.coords_pieces[(y2, x2)] = name
-        # TODO: Fix logic
         # find out kings position
         king_y, king_x = tuple(self.pieces_coords[color+"_"+"king"])
 
