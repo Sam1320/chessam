@@ -96,8 +96,8 @@ class GameBoard(Frame):
 
     def protect_king_possible(self, name, x1, y1, x2, y2):
         return self.block_possible(name, x1, y1, x2, y2) or \
-                self.evade_possible(name, x1, y1, x2, y2) # \or
-        #        self.take_possible(name, x1, y1, x2, y2)
+               self.evade_possible(name, x1, y1, x2, y2) or \
+               self.take_possible(name, x1, y1, x2, y2)
 
     def block_possible(self, name, x1,y1, x2, y2):
         old_piece = self.coords_pieces[(y2, x2)]
@@ -161,15 +161,22 @@ class GameBoard(Frame):
             tuple(self.pieces_coords[self.opponent_color()+"_"+"king"])
         for i, j in [(1, 1), (1, -1), (-1, 1), (-1, -1),
                      (1, 0), (0, 1), (-1, 0), (0, -1)]:
-            taken = self.coords_pieces[(i, j)]
+            if not ((0 <= king_y+i <= 7) and (0 <= king_x+j <= 7)):
+                continue
+            taken = self.coords_pieces[(king_y+i, king_x+j)]
             if taken:
                 color_taken = taken.split("_")[0]
                 if color_taken != self.opponent_color():
                     evade = not self.checked(f"{self.opponent_color()}_king",
-                                 king_x, king_y, king_x+i, king_y+j,
+                                 king_x, king_y, king_x+j, king_y+i,
                                  self.opponent_color())
-                    if evade:
-                        break
+            else:
+                evade = not self.checked(f"{self.opponent_color()}_king",
+                                         king_x, king_y, king_x + j,
+                                         king_y + i,
+                                         self.opponent_color())
+            if evade:
+                break
         # restore position
         self.coords_pieces[(y2, x2)] = old_piece
         self.pieces_coords[old_piece] = (y2, x2)
@@ -179,9 +186,21 @@ class GameBoard(Frame):
         return evade
 
 
-
     def take_possible(self, name,  x1, y1, x2, y2):
-        pass
+        # simulate move
+        old_piece = self.coords_pieces[(y2, x2)]
+        self.pieces_coords[old_piece] = None
+        self.pieces_coords[name] = (y2, x2)
+        self.coords_pieces[(y1, x1)] = None
+        self.coords_pieces[(y2, x2)] = name
+        # check if move possible
+        take = self.move_possible(x2, y2, self.opponent_color())
+        # restore position
+        self.coords_pieces[(y2, x2)] = old_piece
+        self.pieces_coords[old_piece] = (y2, x2)
+        self.coords_pieces[(y1, x1)] = name
+        self.pieces_coords[name] = (y1, x1)
+        return take
 
     def move_possible(self, x, y, color):
         block = False
