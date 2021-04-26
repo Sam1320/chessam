@@ -2,7 +2,7 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 
-# TODO: checkmate
+# TODO: verify double check
 # TODO: castling
 # TODO: stalemate
 # TODO: en passant
