@@ -210,10 +210,40 @@ class Queen(Piece):
         moves.extend(bishop.possible_moves(coords_pieces))
         moves.extend(rook.possible_moves(coords_pieces))
         return moves
-    
+
     def valid_move(self, x2, y2, coords_pieces):
         rook = Rook(self.color, self.position)
         bishop = Bishop(self.color, self.position)
 
         return rook.valid_move(x2, y2, coords_pieces) or \
             bishop.valid_move(x2, y2, coords_pieces)
+
+
+class King(Piece):
+    def __init__(self, color, position):
+        self.color = color
+        self.position = position
+        self.value = 3
+        self.player = 1 if position[0] == 7 else 2
+
+    def possible_moves(self, coords_pieces):
+        y, x = self.position
+        moves = []
+        options = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1),
+                   (0, -1), (-1, -1)]
+        for row, col in options:
+            if self.valid_move(x+col, y+row, coords_pieces):
+                moves.append((x+col, y+row))
+        return moves
+
+    def valid_move(self, x2, y2, coords_pieces):
+        if not self.on_board(x2, y2):
+            return False
+        x1, y1 = self.position
+        if max(abs(x1-x2), abs(y1-y2)) == 1:
+            if not self.friend_here(x2, y2, coords_pieces):
+                return True
+        return False
+
+    def checked(self, coords_pieces):
+        pass
