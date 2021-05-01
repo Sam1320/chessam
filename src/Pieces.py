@@ -1,13 +1,18 @@
 class Piece:
-    def __init__(self, color, position):
-        self.color = color
+    def __init__(self, name, position=(0, 0)):
+        self.name = name
         self.position = position
+        self.color = name.split("_")[0]
+        self.type = name.split("_")[1]
 
     @staticmethod
     def on_board(x, y):
         if (0 <= x <= 7) and (0 <= y <= 7):
             return True
         return False
+
+    def set_position(self, position):
+        self.position = position
 
     def friend_here(self, x, y, coords_pieces):
         taken = coords_pieces[(y, x)]
@@ -19,11 +24,10 @@ class Piece:
 
 
 class Pawn(Piece):
-    def __init__(self, color, position):
-        self.color = color
-        self.position = position
+    def __init__(self, name, position):
+        super().__init__(name, position)
         self.value = 1
-        self.player = 1 if position[0] == 6 else 2
+        self.player = 1 if self.position[0] == 6 else 2
 
     def possible_moves(self, coords_pieces):
         y1, x1 = self.position
@@ -67,11 +71,10 @@ class Pawn(Piece):
 
 
 class Rook(Piece):
-    def __init__(self, color, position):
-        self.color = color
-        self.position = position
+    def __init__(self, name, position):
+        super().__init__(name, position)
         self.value = 5
-        self.player = 1 if position[0] == 7 else 2
+        self.player = 1 if self.position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces):
         y1, x1 = self.position
@@ -118,9 +121,8 @@ class Rook(Piece):
 
 
 class Knight(Piece):
-    def __init__(self, color, position):
-        self.color = color
-        self.position = position
+    def __init__(self, name, position):
+        super().__init__(name, position)
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
@@ -145,9 +147,8 @@ class Knight(Piece):
 
 
 class Bishop(Piece):
-    def __init__(self, color, position):
-        self.color = color
-        self.position = position
+    def __init__(self, name, position):
+        super().__init__(name, position)
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
@@ -196,9 +197,8 @@ class Bishop(Piece):
 
 
 class Queen(Piece):
-    def __init__(self, color, position):
-        self.color = color
-        self.position = position
+    def __init__(self, name, position):
+        super().__init__(name, position)
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
@@ -220,9 +220,8 @@ class Queen(Piece):
 
 
 class King(Piece):
-    def __init__(self, color, position):
-        self.color = color
-        self.position = position
+    def __init__(self, name, position):
+        super().__init__(name, position)
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
