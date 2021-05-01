@@ -17,8 +17,7 @@ class Piece:
     def friend_here(self, x, y, coords_pieces):
         taken = coords_pieces[(y, x)]
         if taken:
-            color_taken = taken.color
-            if self.color == color_taken:
+            if self.color == taken.color:
                 return True
         return False
 
@@ -245,4 +244,137 @@ class King(Piece):
         return False
 
     def checked(self, coords_pieces):
-        pass
+        # assume no checks
+        check = False
+        # check diagonals for pawns, queens or bishops
+        i = 1
+        y, x = self.position
+        # up and right
+        while 0 <= y-i <= 7 and 0 <= x+i <= 7:
+            piece = coords_pieces[(y-i, x+i)]
+            if piece:
+                if piece.color == self.color or \
+                   piece.type in {"rook", "knight"} or  \
+                        piece.type == "pawn" and i > 1 or \
+                        piece.type == "king" and i > 1:
+                    break
+                else:
+                    if (piece.type in {"bishop", "queen"}) or \
+                       (piece.type == "pawn" and i == 1) or \
+                       (piece.type == "king" and i == 1):
+                        check = True
+            i += 1
+        # up and left
+        i = 1
+        while 0 <= y-i <= 7 and 0 <= x-i <= 7:
+            piece = coords_pieces[(y-i, x-i)]
+            if piece:
+                if piece.color == self.color or \
+                   piece.type in {"rook", "knight"} or  \
+                        piece.type == "pawn" and i > 1 or \
+                        piece.type == "king" and i > 1:
+                    break
+                else:
+                    if (piece.type in {"bishop", "queen"}) or \
+                       (piece.type == "pawn" and i == 1) or \
+                       (piece.type == "king" and i == 1):
+                        check = True
+            i += 1
+        # down and right
+        i = 1
+        while 0 <= y+i <= 7 and 0 <= x+i <= 7:
+            piece = coords_pieces[(y+i, x+i)]
+            if piece:
+                if piece.color == self.color or \
+                   piece.type in {"rook", "knight"} or  \
+                        piece.type == "pawn" and i > 1 or \
+                        piece.type == "king" and i > 1:
+                    break
+                else:
+                    if (piece.type in {"bishop", "queen"}) or \
+                       (piece.type == "king" and i == 1):
+                        check = True
+            i += 1
+        # down and left
+        i = 1
+        while 0 <= y+i <= 7 and 0 <= x-i <= 7:
+            piece = coords_pieces[(y+i, x-i)]
+            if piece:
+                if piece.color == self.color or \
+                   piece.type in {"rook", "knight"} or  \
+                        piece.type == "pawn" and i > 1 or \
+                        piece.type == "king" and i > 1:
+                    break
+                else:
+                    if (piece.type in {"bishop", "queen"}) or \
+                       (piece.type == "king" and i == 1):
+                        check = True
+            i += 1
+        # check straight lines for rooks or queens
+        # up
+        i = 1
+        while 0 <= y-i <= 7:
+            piece = coords_pieces[(y-i, x)]
+            if piece:
+                if piece.color == self.color or piece.type not in {"rook", "queen"}:
+                    break
+                else:
+                    if piece.type in {"rook", "queen"} or \
+                       piece.type == "king" and i == 1:
+                        check = True
+            i += 1
+        # down
+        i = 1
+        while 0 <= y+i <= 7:
+            piece = coords_pieces[(y+i, x)]
+            if piece:
+                if piece.color == self.color or (piece.type not in {"rook", "queen"}):
+                    break
+                else:
+                    if piece.type in {"rook", "queen"} or \
+                       piece.type == "king" and i == 1:
+                        check = True
+            i += 1
+        # right
+        i = 1
+        while 0 <= x+i <= 7:
+            piece = coords_pieces[(y, x+i)]
+            if piece:
+                if piece.color == self.color or (piece.type not in {"rook", "queen"}):
+                    break
+                else:
+                    if piece.type in {"rook", "queen"} or \
+                       piece.type == "king" and i == 1:
+                        check = True
+            i += 1
+        # left
+        i = 1
+        while 0 <= x-i <= 7:
+            piece = coords_pieces[(y, x-i)]
+            if piece:
+                if piece.color == self.color or (piece.type not in {"rook", "queen"}):
+                    break
+                else:
+                    if piece.type in {"rook", "queen"} or \
+                       piece.type == "king" and i == 1:
+                        check = True
+            i += 1
+        # check knight checks
+        # up
+        p1 = coords_pieces[(y-2, x+1)]
+        p2 = coords_pieces[(y-2, x-1)]
+        # right
+        p3 = coords_pieces[(y+1, x+2)]
+        p4 = coords_pieces[(y-1, x+2)]
+        # down
+        p5 = coords_pieces[(y+2, x-1)]
+        p6 = coords_pieces[(y+2, x+1)]
+        # left
+        p7 = coords_pieces[(y+1, x-2)]
+        p8 = coords_pieces[(y-1, x-2)]
+        opp_color = "white" if self.color == "black" else "black"
+        if opp_color+"_"+"knight" in str(p1)+str(p2)+str(p3)+str(p4)+str(p5) +\
+                str(p6)+str(p7)+str(p8):
+            check = True
+
+        return check
