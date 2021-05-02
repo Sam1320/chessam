@@ -93,7 +93,7 @@ class GameBoard(Frame):
             if self.coords_pieces[(y2, x2)]:
                 dead_piece = self.coords_pieces[(y2, x2)]
                 # TODO: find optimal solution
-                self.canvas.coords(dead_piece, -self.size, -self.size)
+                self.canvas.coords(dead_piece.name, -self.size, -self.size)
                 # free previous square in coord_pieces dict
                 self.pieces_coords[dead_piece] = None
 
@@ -101,6 +101,7 @@ class GameBoard(Frame):
                 self.pawn_promotion(piece, y2, x2)
             else:
                 self.pieces_coords[piece] = (y2, x2)
+                piece.set_position((y2, x2))
                 self.coords_pieces[(y2, x2)] = piece
                 x0 = (x2 * self.size) + int(self.size/2)
                 y0 = (y2 * self.size) + int(self.size/2)
@@ -376,12 +377,13 @@ class GameBoard(Frame):
 
         color = "white" if self.current_color() == "black" else "black"
         new_name = color+"_"+new_type+"_promoted_"+str(row)+str(col)
+        new_piece = self.create_piece(new_name, (row, col))
         self.canvas.create_image(0, 0,
                                  image=self.images_dic[color+"_"+new_type],
                                  tags=(new_name, "piece"),
                                  anchor="c")
-        self.pieces_coords[new_name] = (row, col)
-        self.coords_pieces[(row, col)] = new_name
+        self.pieces_coords[new_piece] = (row, col)
+        self.coords_pieces[(row, col)] = new_piece
         x0 = (col * self.size) + int(self.size / 2)
         y0 = (row * self.size) + int(self.size / 2)
         self.canvas.coords(new_name, x0, y0)
