@@ -4,6 +4,7 @@ class Piece:
         self.position = position
         self.color = name.split("_")[0]
         self.type = name.split("_")[1]
+        self.player = None
 
     @staticmethod
     def on_board(x, y):
@@ -21,6 +22,44 @@ class Piece:
                 return True
         return False
 
+    def my_turn(self, player):
+        # Only allow turn based moves
+        if self.player == player:
+            return True
+        return False
+
+    def my_king_checked(self, x2, y2, coords_pieces, pieces_coords):
+        y1, x1 = self.position
+        # assume no check
+        check = False
+        # simulate move
+        old_piece = coords_pieces[(y2, x2)]
+        pieces_coords[old_piece] = None
+        pieces_coords[self] = (y2, x2)
+        self.set_position((y2, x2))
+        coords_pieces[(y1, x1)] = None
+        coords_pieces[(y2, x2)] = self
+        for piece in pieces_coords:
+            if piece:
+                if piece.color == self.color and piece.type == "king":
+                    check = piece.checked(coords_pieces)
+
+        # restore position
+        coords_pieces[(y2, x2)] = old_piece
+        pieces_coords[old_piece] = (y2, x2)
+        coords_pieces[(y1, x1)] = self
+        pieces_coords[self] = (y1, x1)
+        self.set_position((y1, x1))
+        return check
+
+    def legal_move(self, x, y, coords_pieces, pieces_coords, player):
+        if self.on_board(x, y) \
+                and self.my_turn(player) \
+                and not self.friend_here(x, y, coords_pieces) \
+                and not self.my_king_checked(x, y, coords_pieces, pieces_coords):
+            return True
+        return False
+
 
 class Pawn(Piece):
     def __init__(self, name, position):
@@ -28,28 +67,24 @@ class Pawn(Piece):
         self.value = 1
         self.player = 1 if self.position[0] == 6 else 2
 
-    def possible_moves(self, coords_pieces):
+    def possible_moves(self, coords_pieces, pieces_coords, player):
         y1, x1 = self.position
         moves = []
         # move upwards if player 1 else move downwards
         sign = -1 if self.player == 1 else 1
         options = [(sign*1, 1), (sign*1, 0), (sign*1, -1), (sign*2, 0)]
         for col, row in options:
-            if self.valid_move(x1+col, y1+row, coords_pieces):
+            if self.valid_move(x1+col, y1+row, coords_pieces, pieces_coords, player):
                 moves.append((x1+col, y1+row))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
         # Check if valid square
-        if not self.on_board(x2, y2):
+        if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
+
         y1, x1 = self.position
-        # Own pieces can't be taken
         taken = coords_pieces[(y2, x2)]
-        if taken:
-            color_taken = taken.color
-            if self.color == color_taken:
-                return False
         # One move forward
         if not taken and ((x1 == x2 and y1 == y2 + 1 and self.player == 1) or
                           (x1 == x2 and y1 == y2 - 1 and self.player == 2)):
@@ -75,22 +110,22 @@ class Rook(Piece):
         self.value = 5
         self.player = 1 if self.position[0] == 7 else 2
 
-    def possible_moves(self, coords_pieces):
+    def possible_moves(self, coords_pieces, pieces_coords, player):
         y1, x1 = self.position
         moves = []
         for i in range(1, 8):
-            if self.valid_move(x1+i, y1, coords_pieces):
+            if self.valid_move(x1+i, y1, coords_pieces, pieces_coords, player):
                 moves.append((x1+i, y1))
-            if self.valid_move(x1-i, y1, coords_pieces):
+            if self.valid_move(x1-i, y1, coords_pieces, pieces_coords, player):
                 moves.append((x1-i, y1))
-            if self.valid_move(x1, y1+i, coords_pieces):
+            if self.valid_move(x1, y1+i, coords_pieces, pieces_coords, player):
                 moves.append((x1, y1+i))
-            if self.valid_move(x1, y1-i, coords_pieces):
+            if self.valid_move(x1, y1-i, coords_pieces, pieces_coords, player):
                 moves.append((x1, y1-i))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces):
-        if not self.on_board(x2, y2):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+        if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         y1, x1 = self.position
         if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
@@ -125,23 +160,22 @@ class Knight(Piece):
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
-    def possible_moves(self, coords_pieces):
+    def possible_moves(self, coords_pieces, pieces_coords, player):
         y, x = self.position
         moves = []
         options = [(-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2),
                    (-2, -1), (-2, 1)]
-        for row, col in options:
-            if self.valid_move(x+col, y+row, coords_pieces):
-                moves.append((x+col, y+row))
+        for r, c in options:
+            if self.valid_move(x+c, y+r, coords_pieces, pieces_coords, player):
+                moves.append((x+c, y+r))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces):
-        if not self.on_board(x2, y2):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+        if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         x1, y1 = self.position
         if max(abs(x1-x2), abs(y1-y2)) == 1:
-            if not self.friend_here(x2, y2, coords_pieces):
-                return True
+            return True
         return False
 
 
@@ -151,24 +185,24 @@ class Bishop(Piece):
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
-    def possible_moves(self, coords_pieces):
+    def possible_moves(self, coords_pieces, pieces_coords, player):
         y1, x1 = self.position
         moves = []
         for i in range(1, 8):
-            if self.valid_move(x1-i, y1+i, coords_pieces):
+            if self.valid_move(x1-i, y1+i, coords_pieces, pieces_coords, player):
                 moves.append((x1-i, y1+i))
-            if self.valid_move(x1+i, y1+i, coords_pieces):
+            if self.valid_move(x1+i, y1+i, coords_pieces, pieces_coords, player):
                 moves.append((x1+i, y1+i))
-            if self.valid_move(x1+i, y1-i, coords_pieces):
+            if self.valid_move(x1+i, y1-i, coords_pieces, pieces_coords, player):
                 moves.append((x1+i, y1-i))
-            if self.valid_move(x1-i, y1-i, coords_pieces):
+            if self.valid_move(x1-i, y1-i, coords_pieces, pieces_coords, player):
                 moves.append((x1-i, y1-i))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces):
-        y1, x1 = self.position
-        if not self.on_board(x2, y2):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+        if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
+        y1, x1 = self.position
         if abs(x1 - x2) == abs(y1 - y2):
             # up and right movement
             if x1 < x2 and y1 > y2:
@@ -201,21 +235,21 @@ class Queen(Piece):
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
-    def possible_moves(self, coords_pieces):
+    def possible_moves(self, coords_pieces, pieces_coords, player):
         rook = Rook(self.color, self.position)
         bishop = Bishop(self.color, self.position)
         moves = []
 
-        moves.extend(bishop.possible_moves(coords_pieces))
-        moves.extend(rook.possible_moves(coords_pieces))
+        moves.extend(bishop.possible_moves(coords_pieces, pieces_coords, player))
+        moves.extend(rook.possible_moves(coords_pieces, pieces_coords, player))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
         rook = Rook(self.color, self.position)
         bishop = Bishop(self.color, self.position)
 
-        return rook.valid_move(x2, y2, coords_pieces) or \
-            bishop.valid_move(x2, y2, coords_pieces)
+        return rook.valid_move(x2, y2, coords_pieces, pieces_coords, player) or \
+            bishop.valid_move(x2, y2, coords_pieces, pieces_coords, player)
 
 
 class King(Piece):
@@ -224,18 +258,18 @@ class King(Piece):
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
-    def possible_moves(self, coords_pieces):
+    def possible_moves(self, coords_pieces, pieces_coords, player):
         y, x = self.position
         moves = []
         options = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1),
                    (0, -1), (-1, -1)]
         for row, col in options:
-            if self.valid_move(x+col, y+row, coords_pieces):
+            if self.valid_move(x+col, y+row, coords_pieces, pieces_coords, player):
                 moves.append((x+col, y+row))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces):
-        if not self.on_board(x2, y2):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+        if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         x1, y1 = self.position
         if max(abs(x1-x2), abs(y1-y2)) == 1:

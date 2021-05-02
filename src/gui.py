@@ -85,7 +85,8 @@ class GameBoard(Frame):
 
         y1, x1 = piece.position
         y2, x2 = position
-        valid = piece.valid_move(x2, y2, self.coords_pieces)
+        valid = piece.valid_move(x2, y2, self.coords_pieces,
+                                 self.pieces_coords, self.player)
         if valid:
             self.coords_pieces[(y1, x1)] = None
             # if target square is occupied then delete the taken piece
@@ -175,23 +176,26 @@ class GameBoard(Frame):
 
     def evade_possible(self):
         evade = False
-        king_y, king_x = \
-            tuple(self.pieces_coords[self.opponent_color()+"_"+"king"])
+        king = None
+        for piece in self.pieces_coords:
+            if piece.color == self.opponent_color() and piece.type == "king":
+                king = piece
+        king_y, king_x = king.position
         for i, j in [(1, 1), (1, -1), (-1, 1), (-1, -1),
                      (1, 0), (0, 1), (-1, 0), (0, -1)]:
             if not ((0 <= king_y+i <= 7) and (0 <= king_x+j <= 7)):
                 continue
             taken = self.coords_pieces[(king_y+i, king_x+j)]
             if taken:
-                color_taken = taken.split("_")[0]
-                if color_taken != self.opponent_color():
-                    evade = not self.checked(f"{self.opponent_color()}_king",
-                                 king_x, king_y, king_x+j, king_y+i,
-                                 self.opponent_color())
+                if taken.color != self.opponent_color():
+                    evade = not self.checked(king,
+                                             king_x, king_y,
+                                             king_x+j, king_y+i,
+                                             self.opponent_color())
             else:
-                evade = not self.checked(f"{self.opponent_color()}_king",
-                                         king_x, king_y, king_x + j,
-                                         king_y + i,
+                evade = not self.checked(king,
+                                         king_x, king_y,
+                                         king_x + j, king_y + i,
                                          self.opponent_color())
             if evade:
                 break
@@ -203,24 +207,11 @@ class GameBoard(Frame):
 
     def move_possible(self, x, y, color):
         block = False
-        player = 2 if self.player == 1 else 1
         for piece, coords in self.pieces_coords.items():
             if not piece or not coords:
                 continue
-            piece_type = piece.split("_")[1]
-            piece_color = piece.split("_")[0]
-            y1, x1 = coords[0], coords[1]
-            if color == piece_color:
-                if piece_type == "pawn":
-                    block = self.valid_pawn_move(x1, y1, x, y, False, player)
-                elif piece_type == "knight":
-                    block = self.valid_knight_move(x1, y1, x, y)
-                elif piece_type == "rook":
-                    block = self.valid_rook_move(x1, y1, x, y)
-                elif piece_type == "bishop":
-                    block = self.valid_bishop_move(x1, y1, x, y)
-                elif piece_type == "queen":
-                    block = self.valid_queen_move(x1, y1, x, y)
+            if color == piece.color:
+                block = piece.valid_move(x, y, self.coords_pieces)
                 if block:
                     break
         return block
@@ -261,8 +252,8 @@ class GameBoard(Frame):
                 self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
                                              fill=color, tags="square")
                 color = self.color1 if color == self.color2 else self.color2
-        for name in self.pieces_coords:
-            self.place_piece(name, self.pieces_coords[name][0], self.pieces_coords[name][1])
+        for piece in self.pieces_coords:
+            self.place_piece(piece, piece.position)
         self.canvas.tag_raise("piece")
         self.canvas.tag_lower("square")
 
@@ -271,7 +262,7 @@ class GameBoard(Frame):
         if self.selected:
             row, col = self.coords_to_row_col(e.x, e.y)
             self.canvas.delete("selected")
-            valid = self.place_piece(self.selected_piece, row, col)
+            valid = self.place_piece(self.selected_piece, (row, col))
             self.selected_piece = None
             self.selected = False
             if valid:
@@ -289,9 +280,6 @@ class GameBoard(Frame):
             self.canvas.tag_raise("piece")
             self.selected = True
             self.selected_piece = self.coords_pieces[(row, col)]
-
-    # def move(self, e):
-    #     self.canvas.coords("white_pawn_3", e.x, e.y)
 
     def setup_board(self):
         images = self.images_dic
@@ -358,155 +346,28 @@ class GameBoard(Frame):
     def opponent_color(self):
         return "black" if self.current_color() == "white" else "white"
 
-    def valid_move(self, name, old_coords, new_coords):
-        piece_type = name.split("_")[1]
-        piece_color = name.split("_")[0]
-        # Allow all moves that set up the board
-        if not old_coords:
-            return True
-        # Only allow turn based moves
-        if (piece_color == self.player_1_color and self.player != 1) or \
-                (piece_color != self.player_1_color and self.player == 1):
-            return False
-        y1, x1 = old_coords[0], old_coords[1]
-        y2, x2 = new_coords[0], new_coords[1]
-        # Can't place piece outside of the board
-        if not ((0 <= y2 <= 7) and (0 <= x2 <= 7)):
-            return False
-        # Own pieces can't be taken
-        take = True if self.coords_pieces[(y2, x2)] else False
-        if take:
-            color_taken = self.coords_pieces[(y2, x2)].split("_")[0]
-            if self.player == 1 and self.player_1_color == color_taken or \
-                    self.player == 2 and self.player_1_color != color_taken:
-                return False
-        # The move can't result in your own king being checked
-        color = self.current_color()
-        if self.checked(name, x1, y1, x2, y2, color):
-            return False
-        if piece_type == "pawn":
-            return self.valid_pawn_move(x1, y1, x2, y2, take, self.player)
-        elif piece_type == "knight":
-            return self.valid_knight_move(x1, y1, x2, y2)
-        elif piece_type == "bishop":
-            return self.valid_bishop_move(x1, y1, x2, y2)
-        elif piece_type == "rook":
-            return self.valid_rook_move(x1, y1, x2, y2)
-        elif piece_type == "queen":
-            return self.valid_queen_move(x1, y1, x2, y2)
-        elif piece_type == "king":
-            return self.valid_king_move(x1, y1, x2, y2)
-
-        return False
-
-    def valid_rook_move(self, x1, y1, x2, y2):
-        if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
-            # upward movement
-            if x1 == x2 and y1 > y2:
-                for i in range(1, abs(y1 - y2)):
-                    if self.coords_pieces[(y1 - i, x1)]:
-                        return False
-            # downward movement
-            elif x1 == x2 and y1 < y2:
-                for i in range(1, abs(y1 - y2)):
-                    if self.coords_pieces[(y1 + i, x1)]:
-                        return False
-            # rightward movement
-            elif x1 < x2 and y1 == y2:
-                for i in range(1, abs(x1 - x2)):
-                    if self.coords_pieces[(y1, x1 + i)]:
-                        return False
-            # leftward movement
-            elif x1 > x2 and y1 == y2:
-                for i in range(1, abs(x1 - x2)):
-                    if self.coords_pieces[(y1, x1 - i)]:
-                        return False
-            return True
-        else:
-            return False
-
-    def valid_queen_move(self, x1, y1, x2, y2):
-        if self.valid_rook_move(x1, y1, x2, y2) or \
-                self.valid_bishop_move(x1, y1, x2, y2):
-            return True
-        return False
-
-    def valid_bishop_move(self, x1, y1, x2, y2):
-        if abs(x1 - x2) == abs(y1 - y2):
-            # up and right movement
-            if x1 < x2 and y1 > y2:
-                for i in range(1, abs(x1 - x2)):
-                    if self.coords_pieces[(y1 - i, x1 + i)]:
-                        return False
-            # down and right movement
-            elif x1 < x2 and y1 < y2:
-                for i in range(1, abs(x1 - x2)):
-                    if self.coords_pieces[(y1 + i, x1 + i)]:
-                        return False
-            # up and left movement
-            elif x1 > x2 and y1 > y2:
-                for i in range(1, abs(x1 - x2)):
-                    if self.coords_pieces[(y1 - i, x1 - i)]:
-                        return False
-            # down and left movement
-            elif x1 > x2 and y1 < y2:
-                for i in range(1, abs(x1 - x2)):
-                    if self.coords_pieces[(y1 + i, x1 - i)]:
-                        return False
-            return True
-        else:
-            return False
-
-    def valid_pawn_move(self, x1, y1, x2, y2, take, player):
-        # One move forward
-        if not take and ((x1 == x2 and y1 == y2 + 1 and player == 1) or
-                         (x1 == x2 and y1 == y2 - 1 and player == 2)):
-            return True
-        # Two moves forward and first move
-        elif not take and ((y1 == 1 or y1 == 6) and
-                           ((x1 == x2 and y1 == y2 + 2 and player == 1) or
-                            (x1 == x2 and y1 == y2 - 2 and player == 2))):
-            return True
-        # One square diagonal and take
-        elif take and ((abs(x1 - x2) == 1 and y1 == y2 + 1 and player == 1) or
-                       (abs(x1 - x2) == 1 and y1 == y2 - 1 and player == 2)):
-            return True
-        return False
-
-    def valid_knight_move(self, x1, y1, x2, y2):
-        if (abs(x1 - x2) == 2 and abs(y1 - y2) == 1) or \
-                (abs(x1 - x2) == 1 and abs(y1 - y2) == 2):
-            return True
-
-    def valid_king_move(self, x1, y1, x2, y2):
-        if max(abs(x1-x2), abs(y1-y2)) == 1:
-            return True
-        else:
-            return False
-
-    def checked(self, name, x1, y1, x2, y2, color):
+    def checked(self, piece, x1, y1, x2, y2, color):
         # assume no check
         check = False
-        # save taken piece
+        # simulate move
         old_piece = self.coords_pieces[(y2, x2)]
-        # assign new coords to pieces
         self.pieces_coords[old_piece] = None
-        self.pieces_coords[name] = (y2, x2)
-        # free former square
+        self.pieces_coords[piece] = (y2, x2)
         self.coords_pieces[(y1, x1)] = None
-        # place piece
-        self.coords_pieces[(y2, x2)] = name
-        # find out kings position
-        for piece in self.pieces_coords:
-            if piece.color == color and piece.type == "king":
-                check = piece.checked(self.coords_pieces)
+        self.coords_pieces[(y2, x2)] = piece
+        piece.set_position((y2, x2))
+
+        for p in self.pieces_coords:
+            if p.color == color and p.type == "king":
+                check = p.checked(self.coords_pieces)
                 break
 
         # restore position
         self.coords_pieces[(y2, x2)] = old_piece
         self.pieces_coords[old_piece] = (y2, x2)
-        self.coords_pieces[(y1, x1)] = name
-        self.pieces_coords[name] = (y1, x1)
+        self.coords_pieces[(y1, x1)] = piece
+        self.pieces_coords[piece] = (y1, x1)
+        piece.set_position((y1, x1))
 
         return check
 
