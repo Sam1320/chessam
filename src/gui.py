@@ -3,6 +3,7 @@ from utilities.images_dict import Images
 from collections import defaultdict
 from src.Pieces import *
 
+# TODO: fix all that broke after great refactor
 # TODO: verify double check
 # TODO: castling
 # TODO: stalemate
@@ -11,7 +12,6 @@ from src.Pieces import *
 # TODO: add clocks
 # TODO: reset button
 # TODO: change pieces icons
-# TODO: create piece objects and delegate responsibilities
 # TODO: use either row and col or x and y but not both
 # TODO: easy way to locate kings
 
@@ -54,27 +54,28 @@ class GameBoard(Frame):
         self.canvas.bind("<Button-1>", self.select)
 
     @staticmethod
-    def create_piece(name, position):
-        piece_type = name.split("_")[1]
+    def create_piece(color, piece_type, position, player):
         if piece_type == "pawn":
-            piece = Pawn(name, position)
+            piece = Pawn(color, position, player)
         elif piece_type == "rook":
-            piece = Rook(name, position)
+            piece = Rook(color, position, player)
         elif piece_type == "bishop":
-            piece = Bishop(name, position)
+            piece = Bishop(color, position, player)
         elif piece_type == "knight":
-            piece = Knight(name, position)
-        elif piece_type == "Queen":
-            piece = Queen(name, position)
+            piece = Knight(color, position, player)
+        elif piece_type == "queen":
+            piece = Queen(color, position, player)
+        elif piece_type == "king":
+            piece = King(color, position, player)
         else:
-            piece = King(name, position)
+            raise Exception(f"{piece_type} is not a valid piece_type.")
         return piece
 
-    def add_piece(self, name, image, row, column):
+    def add_piece(self, color, piece_type, player,  image, row, column):
         # Add a piece to the playing board'''
-        self.canvas.create_image(0, 0, image=image, tags=(name, "piece"),
+        piece = self.create_piece(color, piece_type, (row, column), player)
+        self.canvas.create_image(0, 0, image=image, tags=(piece.name, "piece"),
                                  anchor="c")
-        piece = self.create_piece(name, (row, column))
         self.pieces_coords[piece] = piece.position
         self.coords_pieces[piece.position] = piece
         x0 = (piece.position[1] * self.size) + int(self.size/2)
@@ -124,9 +125,10 @@ class GameBoard(Frame):
     def king_checked(self, color):
         check = False
         for p in self.pieces_coords:
-            if p.color == color and p.type == "king":
-                check = p.checked(self.coords_pieces)
-                break
+            if p:
+                if p.color == color and p.type == "king":
+                    check = p.checked(self.coords_pieces)
+                    break
         return check
 
     def protect_possible(self, piece, x2, y2):
@@ -136,9 +138,10 @@ class GameBoard(Frame):
 
     def block_possible(self, piece, x2, y2):
         king = None
-        for piece in self.pieces_coords:
-            if piece.color == self.opponent_color() and piece.type == "king":
-                king = piece
+        for p in self.pieces_coords:
+            if p:
+                if p.color == self.opponent_color() and p.type == "king":
+                    king = p
         king_y, king_x = king.position
         # determine the direction of the check
         up = True if king_y < y2 else False
@@ -179,8 +182,9 @@ class GameBoard(Frame):
         evade = False
         king = None
         for piece in self.pieces_coords:
-            if piece.color == self.opponent_color() and piece.type == "king":
-                king = piece
+            if piece:
+                if piece.color == self.opponent_color() and piece.type == "king":
+                    king = piece
         king_y, king_x = king.position
         for i, j in [(1, 1), (1, -1), (-1, 1), (-1, -1),
                      (1, 0), (0, 1), (-1, 0), (0, -1)]:
@@ -212,7 +216,8 @@ class GameBoard(Frame):
             if not piece or not coords:
                 continue
             if color == piece.color:
-                block = piece.valid_move(x, y, self.coords_pieces)
+                block = piece.valid_move(x, y, self.coords_pieces,
+                                         self.pieces_coords, self.player)
                 if block:
                     break
         return block
@@ -284,24 +289,26 @@ class GameBoard(Frame):
 
     def setup_board(self):
         images = self.images_dic
+        white_player = 1 if self.player_1_color == "white" else 2
+        black_player = 2 if white_player == 1 else 1
         for c in range(self.columns):
-            self.add_piece("white_pawn_" + str(c), self.images_dic["white_pawn"], 6, c)
-            self.add_piece("black_pawn_" + str(c), images["black_pawn"], 1, c)
+            self.add_piece("white", "pawn", white_player, self.images_dic["white_pawn"], 6, c)
+            self.add_piece("black", "pawn", black_player, images["black_pawn"], 1, c)
             if c == 0 or c == 7:
-                self.add_piece("white_rook_" + str(c), images["white_rook"], 7, c)
-                self.add_piece("black_rook_" + str(c), images["black_rook"], 0, c)
+                self.add_piece("white", "rook", white_player, images["white_rook"], 7, c)
+                self.add_piece("black", "rook", black_player, images["black_rook"], 0, c)
             if c == 1 or c == 6:
-                self.add_piece("white_knight_" + str(c), images["white_knight"], 7, c)
-                self.add_piece("black_knight_" + str(c), images["black_knight"], 0, c)
+                self.add_piece("white", "knight", white_player, images["white_knight"], 7, c)
+                self.add_piece("black", "knight",black_player, images["black_knight"], 0, c)
             if c == 2 or c == 5:
-                self.add_piece("white_bishop_" + str(c), images["white_bishop"], 7, c)
-                self.add_piece("black_bishop_" + str(c), images["black_bishop"], 0, c)
+                self.add_piece("white", "bishop", white_player, images["white_bishop"], 7, c)
+                self.add_piece("black", "bishop", black_player, images["black_bishop"], 0, c)
             if c == 3:
-                self.add_piece("white_queen", images["white_queen"], 7, c)
-                self.add_piece("black_queen", images["black_queen"], 0, c)
+                self.add_piece("white", "queen", white_player, images["white_queen"], 7, c)
+                self.add_piece("black", "queen", black_player, images["black_queen"], 0, c)
             if c == 4:
-                self.add_piece("white_king", images["white_king"], 7, c)
-                self.add_piece("black_king", images["black_king"], 0, c)
+                self.add_piece("white", "king", white_player, images["white_king"], 7, c)
+                self.add_piece("black", "king", black_player, images["black_king"], 0, c)
 
     def coords_to_row_col(self, x, y):
         size = self.size
@@ -372,21 +379,20 @@ class GameBoard(Frame):
 
         return check
 
-    def promote(self, name, new_type, row, col):
-        self.canvas.coords(name, -self.size, -self.size)
+    def promote(self, piece, new_type, row, col):
+        self.canvas.coords(piece.name, -self.size, -self.size)
 
         color = "white" if self.current_color() == "black" else "black"
-        new_name = color+"_"+new_type+"_promoted_"+str(row)+str(col)
-        new_piece = self.create_piece(new_name, (row, col))
+        new_piece = self.create_piece(color, new_type, (row, col))
         self.canvas.create_image(0, 0,
                                  image=self.images_dic[color+"_"+new_type],
-                                 tags=(new_name, "piece"),
+                                 tags=(new_piece.name, "piece"),
                                  anchor="c")
         self.pieces_coords[new_piece] = (row, col)
         self.coords_pieces[(row, col)] = new_piece
         x0 = (col * self.size) + int(self.size / 2)
         y0 = (row * self.size) + int(self.size / 2)
-        self.canvas.coords(new_name, x0, y0)
+        self.canvas.coords(new_piece.name, x0, y0)
         self.promote_queen_button.destroy()
         self.promote_knight_button.destroy()
         self.promote_bishop_button.destroy()

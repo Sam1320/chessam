@@ -1,10 +1,9 @@
+from copy import deepcopy
 class Piece:
-    def __init__(self, name, position=(0, 0)):
-        self.name = name
+    def __init__(self, color, position, player):
         self.position = position
-        self.color = name.split("_")[0]
-        self.type = name.split("_")[1]
-        self.player = None
+        self.color = color
+        self.player = player
 
     @staticmethod
     def on_board(x, y):
@@ -53,17 +52,21 @@ class Piece:
         return check
 
     def legal_move(self, x, y, coords_pieces, pieces_coords, player):
+        pieces_coords_copy = deepcopy(pieces_coords)
+        coords_pieces_copy = deepcopy(coords_pieces)
         if self.on_board(x, y) \
                 and self.my_turn(player) \
-                and not self.friend_here(x, y, coords_pieces) \
-                and not self.my_king_checked(x, y, coords_pieces, pieces_coords):
+                and not self.friend_here(x, y, coords_pieces_copy) \
+                and not self.my_king_checked(x, y, coords_pieces_copy, pieces_coords_copy):
             return True
         return False
 
 
 class Pawn(Piece):
-    def __init__(self, name, position):
-        super().__init__(name, position)
+    def __init__(self, color, position, player):
+        super().__init__(color, position, player)
+        self.type = "pawn"
+        self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 1
         self.player = 1 if self.position[0] == 6 else 2
 
@@ -105,10 +108,11 @@ class Pawn(Piece):
 
 
 class Rook(Piece):
-    def __init__(self, name, position):
-        super().__init__(name, position)
+    def __init__(self, color, position, player):
+        super().__init__(color, position, player)
+        self.type = "rook"
+        self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 5
-        self.player = 1 if self.position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y1, x1 = self.position
@@ -155,8 +159,10 @@ class Rook(Piece):
 
 
 class Knight(Piece):
-    def __init__(self, name, position):
-        super().__init__(name, position)
+    def __init__(self, color, position, player):
+        super().__init__(color, position, player)
+        self.type = "knight"
+        self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
@@ -173,15 +179,17 @@ class Knight(Piece):
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
-        x1, y1 = self.position
+        y1, x1 = self.position
         if max(abs(x1-x2), abs(y1-y2)) == 1:
             return True
         return False
 
 
 class Bishop(Piece):
-    def __init__(self, name, position):
-        super().__init__(name, position)
+    def __init__(self, color, position, player):
+        super().__init__(color, position, player)
+        self.type = "bishop"
+        self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
@@ -230,14 +238,16 @@ class Bishop(Piece):
 
 
 class Queen(Piece):
-    def __init__(self, name, position):
-        super().__init__(name, position)
-        self.value = 3
+    def __init__(self, color, position, player):
+        super().__init__(color, position, player)
+        self.type = "queen"
+        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.value = 9
         self.player = 1 if position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
-        rook = Rook(self.color, self.position)
-        bishop = Bishop(self.color, self.position)
+        rook = Rook(self.color, self.position, player)
+        bishop = Bishop(self.color, self.position, player)
         moves = []
 
         moves.extend(bishop.possible_moves(coords_pieces, pieces_coords, player))
@@ -245,16 +255,18 @@ class Queen(Piece):
         return moves
 
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
-        rook = Rook(self.color, self.position)
-        bishop = Bishop(self.color, self.position)
+        rook = Rook(self.color, self.position, player)
+        bishop = Bishop(self.color, self.position, player)
 
         return rook.valid_move(x2, y2, coords_pieces, pieces_coords, player) or \
             bishop.valid_move(x2, y2, coords_pieces, pieces_coords, player)
 
 
 class King(Piece):
-    def __init__(self, name, position):
-        super().__init__(name, position)
+    def __init__(self, color, position, player):
+        super().__init__(color, position, player)
+        self.type = "king"
+        self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
         self.player = 1 if position[0] == 7 else 2
 
@@ -271,7 +283,7 @@ class King(Piece):
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
-        x1, y1 = self.position
+        y1, x1 = self.position
         if max(abs(x1-x2), abs(y1-y2)) == 1:
             if not self.friend_here(x2, y2, coords_pieces):
                 return True
@@ -325,9 +337,8 @@ class King(Piece):
                         piece.type == "king" and i > 1:
                     break
                 else:
-                    if (piece.type in {"bishop", "queen"}) or \
-                       (piece.type == "king" and i == 1):
-                        check = True
+                    check = True
+                    break
             i += 1
         # down and left
         i = 1
