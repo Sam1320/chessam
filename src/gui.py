@@ -285,8 +285,10 @@ class GameBoard(Frame):
                                          fill="red", tags="selected")
             self.select_label.config(text="row: "+str(row)+" col: "+str(col))
             self.canvas.tag_raise("piece")
-            self.selected = True
-            self.selected_piece = self.coords_pieces[(row, col)]
+            piece = self.coords_pieces[(row, col)]
+            if piece:
+                self.selected = True
+                self.selected_piece = piece
 
     def setup_board(self):
         images = self.images_dic
