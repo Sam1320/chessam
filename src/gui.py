@@ -212,12 +212,13 @@ class GameBoard(Frame):
 
     def move_possible(self, x, y, color):
         block = False
+        player = 1 if self.player_1_color == color else 2
         for piece, coords in self.pieces_coords.items():
             if not piece or not coords:
                 continue
             if color == piece.color:
                 block = piece.valid_move(x, y, self.coords_pieces,
-                                         self.pieces_coords, self.player)
+                                         self.pieces_coords, player)
                 if block:
                     break
         return block
