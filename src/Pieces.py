@@ -247,7 +247,6 @@ class Queen(Piece):
         self.type = "queen"
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 9
-        self.player = 1 if position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         rook = Rook(self.color, self.position, player)
@@ -272,7 +271,6 @@ class King(Piece):
         self.type = "king"
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
-        self.player = 1 if position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y, x = self.position
@@ -393,21 +391,12 @@ class King(Piece):
             i += 1
         # check knight checks
         # up
-        p1 = coords_pieces[(y-2, x+1)]
-        p2 = coords_pieces[(y-2, x-1)]
-        # right
-        p3 = coords_pieces[(y+1, x+2)]
-        p4 = coords_pieces[(y-1, x+2)]
-        # down
-        p5 = coords_pieces[(y+2, x-1)]
-        p6 = coords_pieces[(y+2, x+1)]
-        # left
-        p7 = coords_pieces[(y+1, x-2)]
-        p8 = coords_pieces[(y-1, x-2)]
-        # TODO: Fix this logic below
-        opp_color = "white" if self.color == "black" else "black"
-        if opp_color+"_"+"knight" in str(p1)+str(p2)+str(p3)+str(p4)+str(p5) +\
-                str(p6)+str(p7)+str(p8):
-            check = True
-
+        knight_positions = [(-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2),
+                            (-2, -1), (-2, 1)]
+        for i, j in knight_positions:
+            piece = coords_pieces[(y - i, x + j)]
+            if piece:
+                if piece.type == "knight" and piece.color != self.color:
+                    check = True
+                    break
         return check
