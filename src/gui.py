@@ -98,7 +98,7 @@ class GameBoard(Frame):
                 # free previous square in coord_pieces dict
                 self.pieces_coords[dead_piece] = None
 
-            if (y2 == 7 or y2 == 0) and piece.name == "pawn":
+            if (y2 == 7 or y2 == 0) and piece.type == "pawn":
                 self.pawn_promotion(piece, y2, x2)
             else:
                 self.pieces_coords[piece] = (y2, x2)
@@ -383,8 +383,9 @@ class GameBoard(Frame):
     def promote(self, piece, new_type, row, col):
         self.canvas.coords(piece.name, -self.size, -self.size)
 
-        color = "white" if self.current_color() == "black" else "black"
-        new_piece = self.create_piece(color, new_type, (row, col))
+        color = self.opponent_color()
+        player = 2 if self.player == 1 else 1
+        new_piece = self.create_piece(color, new_type, (row, col), player)
         self.canvas.create_image(0, 0,
                                  image=self.images_dic[color+"_"+new_type],
                                  tags=(new_piece.name, "piece"),
