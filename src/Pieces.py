@@ -74,7 +74,6 @@ class Pawn(Piece):
         self.type = "pawn"
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 1
-        self.player = 1 if self.position[0] == 6 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y1, x1 = self.position
@@ -170,7 +169,6 @@ class Knight(Piece):
         self.type = "knight"
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
-        self.player = 1 if position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y, x = self.position
@@ -198,7 +196,6 @@ class Bishop(Piece):
         self.type = "bishop"
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
-        self.player = 1 if position[0] == 7 else 2
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y1, x1 = self.position
