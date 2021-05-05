@@ -47,6 +47,7 @@ class Piece:
                 if piece:
                     if piece.color == self.color and piece.type == "king":
                         check = piece.checked(coords_pieces)
+                        break
 
         # restore position
         coords_pieces[(y2, x2)] = old_piece
@@ -185,7 +186,8 @@ class Knight(Piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         y1, x1 = self.position
-        if max(abs(x1-x2), abs(y1-y2)) == 1:
+        if (abs(x1 - x2) == 2 and abs(y1 - y2) == 1) or \
+                (abs(x1 - x2) == 1 and abs(y1 - y2) == 2):
             return True
         return False
 
@@ -405,6 +407,7 @@ class King(Piece):
         # left
         p7 = coords_pieces[(y+1, x-2)]
         p8 = coords_pieces[(y-1, x-2)]
+        # TODO: Fix this logic below
         opp_color = "white" if self.color == "black" else "black"
         if opp_color+"_"+"knight" in str(p1)+str(p2)+str(p3)+str(p4)+str(p5) +\
                 str(p6)+str(p7)+str(p8):
