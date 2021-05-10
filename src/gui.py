@@ -42,7 +42,9 @@ class GameBoard(Frame):
         self.player = 1
         self.player_1_color = "white"
         self.check = False
-
+        self.king_moved = {"white": False, "black": True}
+        # 1 is right rook, 0 is left rook
+        self.rook_moved = {1: False, 0: False}
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
                              width=canvas_width, height=canvas_height,
                              background="bisque")
@@ -82,13 +84,20 @@ class GameBoard(Frame):
         y0 = (piece.position[0] * self.size) + int(self.size/2)
         self.canvas.coords(piece.name, x0, y0)
 
+    def get_piece(self, name):
+        for p in self.pieces_coords:
+            if p.name == name:
+                return p
+
     def place_piece(self, piece, position):
 
         y1, x1 = piece.position
         y2, x2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
                                  self.pieces_coords, self.player)
+        castle = piece.castle(x2, y2, self.coords_pieces)
         if valid:
+
             self.coords_pieces[(y1, x1)] = None
             # if target square is occupied then delete the taken piece
             if self.coords_pieces[(y2, x2)]:
@@ -98,8 +107,10 @@ class GameBoard(Frame):
                 # free previous square in coord_pieces dict
                 self.pieces_coords[dead_piece] = None
 
+            # Pawn promotion
             if (y2 == 7 or y2 == 0) and piece.type == "pawn":
                 self.pawn_promotion(piece, y2, x2)
+            # Normal move
             else:
                 self.pieces_coords[piece] = (y2, x2)
                 piece.set_position((y2, x2))
@@ -108,7 +119,18 @@ class GameBoard(Frame):
                 y0 = (y2 * self.size) + int(self.size/2)
                 self.canvas.coords(piece.name, x0, y0)
 
-            #######
+            # Castling
+            if castle:
+                rook_x = 7 if x1 < x2 else 0
+                rook = self.get_piece(piece.color+"_rook_"+str(rook_x))
+                new_rook_x = 5 if rook_x == 7 else 2
+                rook_y = rook.position[0]
+                self.pieces_coords[rook] = (rook_y, new_rook_x)
+                x0 = (new_rook_x * self.size) + int(self.size/2)
+                y0 = (rook_y * self.size) + int(self.size/2)
+                self.canvas.coords(rook.name, x0, y0)
+
+            # Checks
             if self.king_checked(self.opponent_color()):
                 if not self.protect_possible(piece, x2, y2):
                     self.check_label.config(text="CHECKMATE!")
@@ -117,8 +139,6 @@ class GameBoard(Frame):
                     self.check_label.config(text="CHECK!")
             else:
                 self.check_label.config(text="no checks")
-
-            ######
 
         return valid
 
