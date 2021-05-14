@@ -130,6 +130,7 @@ class GameBoard(Frame):
                 new_rook_x = 5 if rook_x == 7 else 3
                 rook_y = rook.position[0]
                 self.pieces_coords[rook] = (rook_y, new_rook_x)
+                self.coords_pieces[(rook_y, new_rook_x)] = rook
                 rook.move(new_rook_x, rook_y)
                 x0 = (new_rook_x * self.size) + int(self.size/2)
                 y0 = (rook_y * self.size) + int(self.size/2)
