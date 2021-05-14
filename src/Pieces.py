@@ -87,24 +87,25 @@ class Pawn(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 1
 
-    def possible_moves(self, coords_pieces, pieces_coords, player):
+    def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         y1, x1 = self.position
         moves = []
         # move upwards if player 1 else move downwards
         sign = -1 if self.player == 1 else 1
         options = [(sign*1, 1), (sign*1, 0), (sign*1, -1), (sign*2, 0)]
         for col, row in options:
-            if self.valid_move(x1+col, y1+row, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1+col, y1+row, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+col, y1+row))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         # Check if valid square
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
 
         y1, x1 = self.position
         taken = coords_pieces[(y2, x2)]
+        passant = name_piece["en_passant"]
         # One move forward
         if not taken and ((x1 == x2 and y1 == y2 + 1 and self.player == 1) or
                           (x1 == x2 and y1 == y2 - 1 and self.player == 2)):
@@ -118,6 +119,11 @@ class Pawn(Piece):
         elif taken and ((abs(x1 - x2) == 1 and y1 == y2 + 1 and self.player == 1) or
                         (abs(x1 - x2) == 1 and y1 == y2 - 1 and self.player == 2)):
             return True
+        # En passant
+        elif passant:
+            y3, x3 = passant.position
+            if x3 == x2 and y3 == y1:
+                return True
         return False
 
 
@@ -130,21 +136,21 @@ class Rook(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 5
 
-    def possible_moves(self, coords_pieces, pieces_coords, player):
+    def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         y1, x1 = self.position
         moves = []
         for i in range(1, 8):
-            if self.valid_move(x1+i, y1, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1+i, y1, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+i, y1))
-            if self.valid_move(x1-i, y1, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1-i, y1, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1-i, y1))
-            if self.valid_move(x1, y1+i, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1, y1+i, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1, y1+i))
-            if self.valid_move(x1, y1-i, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1, y1-i, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1, y1-i))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         y1, x1 = self.position
@@ -181,17 +187,17 @@ class Knight(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
 
-    def possible_moves(self, coords_pieces, pieces_coords, player):
+    def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         y, x = self.position
         moves = []
         options = [(-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2),
                    (-2, -1), (-2, 1)]
         for r, c in options:
-            if self.valid_move(x+c, y+r, coords_pieces, pieces_coords, player):
+            if self.valid_move(x+c, y+r, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x+c, y+r))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         y1, x1 = self.position
@@ -208,21 +214,21 @@ class Bishop(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
 
-    def possible_moves(self, coords_pieces, pieces_coords, player):
+    def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         y1, x1 = self.position
         moves = []
         for i in range(1, 8):
-            if self.valid_move(x1-i, y1+i, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1-i, y1+i, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1-i, y1+i))
-            if self.valid_move(x1+i, y1+i, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1+i, y1+i, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+i, y1+i))
-            if self.valid_move(x1+i, y1-i, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1+i, y1-i, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+i, y1-i))
-            if self.valid_move(x1-i, y1-i, coords_pieces, pieces_coords, player):
+            if self.valid_move(x1-i, y1-i, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1-i, y1-i))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         y1, x1 = self.position
@@ -259,21 +265,21 @@ class Queen(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 9
 
-    def possible_moves(self, coords_pieces, pieces_coords, player):
+    def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         rook = Rook(self.color, self.position, player)
         bishop = Bishop(self.color, self.position, player)
         moves = []
 
-        moves.extend(bishop.possible_moves(coords_pieces, pieces_coords, player))
-        moves.extend(rook.possible_moves(coords_pieces, pieces_coords, player))
+        moves.extend(bishop.possible_moves(coords_pieces, pieces_coords, player, name_piece))
+        moves.extend(rook.possible_moves(coords_pieces, pieces_coords, player, name_piece))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         rook = Rook(self.color, self.position, player)
         bishop = Bishop(self.color, self.position, player)
 
-        return rook.valid_move(x2, y2, coords_pieces, pieces_coords, player) or \
-            bishop.valid_move(x2, y2, coords_pieces, pieces_coords, player)
+        return rook.valid_move(x2, y2, coords_pieces, pieces_coords, player, name_piece) or \
+            bishop.valid_move(x2, y2, coords_pieces, pieces_coords, player, name_piece)
 
 
 class King(Piece):
@@ -291,17 +297,17 @@ class King(Piece):
         assert rook_left and rook_right
         self.rooks = {0: rook_left, 1: rook_right}
 
-    def possible_moves(self, coords_pieces, pieces_coords, player):
+    def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         y, x = self.position
         moves = []
         options = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1),
                    (0, -1), (-1, -1)]
         for row, col in options:
-            if self.valid_move(x+col, y+row, coords_pieces, pieces_coords, player):
+            if self.valid_move(x+col, y+row, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x+col, y+row))
         return moves
 
-    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player):
+    def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
         y1, x1 = self.position

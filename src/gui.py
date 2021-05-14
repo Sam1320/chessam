@@ -3,9 +3,10 @@ from utilities.images_dict import Images
 from collections import defaultdict
 from src.Pieces import *
 
-# TODO: fix all that broke after great refactor
+# DONE: castling
+# DONE: fix all that broke after great refactor
+
 # TODO: verify double check
-# TODO: castling
 # TODO: stalemate
 # TODO: en passant
 # TODO: add scores
@@ -50,7 +51,6 @@ class GameBoard(Frame):
                              width=canvas_width, height=canvas_height,
                              background="bisque")
         self.canvas.grid(row=0, columnspan=6, padx=2, pady=2)
-
         # This binding will cause a refresh if the user interactively
         # changes the window size
         self.canvas.bind("<Configure>", self.refresh)
@@ -99,7 +99,7 @@ class GameBoard(Frame):
         y1, x1 = piece.position
         y2, x2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
-                                 self.pieces_coords, self.player)
+                                 self.pieces_coords, self.player, self.name_piece)
         if valid:
 
             self.coords_pieces[(y1, x1)] = None
@@ -110,6 +110,21 @@ class GameBoard(Frame):
                 self.canvas.coords(dead_piece.name, -self.size, -self.size)
                 # free previous square in coord_pieces dict
                 self.pieces_coords[dead_piece] = None
+
+            # en passant
+            if piece.type =="pawn" and self.name_piece["en_passant"]:
+                to_take = self.name_piece["en_passant"]
+                y3, x3 = to_take.position
+                if x3 == x2 and y3 == y1:
+                    self.canvas.coords(to_take.name, -self.size, -self.size)
+                    self.pieces_coords[to_take] = None
+
+            # en passant possible next move
+            if piece.type == "pawn" and abs(y1-y2) == 2:
+                self.name_piece["en_passant"] = piece
+            else:
+                self.name_piece["en_passant"] = None
+
 
             # Pawn promotion
             if (y2 == 7 or y2 == 0) and piece.type == "pawn":
@@ -244,7 +259,7 @@ class GameBoard(Frame):
                 continue
             if color == piece.color:
                 block = piece.valid_move(x, y, self.coords_pieces,
-                                         self.pieces_coords, player)
+                                         self.pieces_coords, player, self.name_piece)
                 if block:
                     break
         return block
