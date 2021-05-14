@@ -15,7 +15,7 @@ class Piece:
         return False
 
     # The king is the only piece that overrides this method
-    def castle(self, x, y, coords):
+    def castle(self, x, y, pieces_coords, coords_pieces):
         return False
 
     def move(self, x, y):
@@ -308,17 +308,21 @@ class King(Piece):
         if max(abs(x1-x2), abs(y1-y2)) == 1:
             if not self.friend_here(x2, y2, coords_pieces):
                 return True
-        elif self.castle(x2, y2, coords_pieces):
+        elif self.castle(x2, y2, coords_pieces, pieces_coords):
             return True
         return False
 
-    def castle(self, x2, y2, coords_pieces):
+    def castle(self, x2, y2, coords_pieces, pieces_coords):
         y1, x1 = self.position
-        if (abs(x1 - x2) == 2
-                and not coords_pieces[(y1, x1 + ((x2 - x1) / 2))]
+
+        diff = x2-x1
+        if (abs(diff) == 2
+                and not coords_pieces[(y1, x1 + int((diff / 2)))]
                 and not coords_pieces[(y2, x2)]
                 and not self.moved
-                and not self.rooks[x1 < x2].moved):
+                and not self.rooks[x1 < x2].moved)\
+                and not self.my_king_checked(x1+int((diff/2)), y1, coords_pieces, pieces_coords):
+
             return True
         return False
 

@@ -123,13 +123,11 @@ class GameBoard(Frame):
                 y0 = (y2 * self.size) + int(self.size/2)
                 self.canvas.coords(piece.name, x0, y0)
 
-            # TODO: Dont allow castling if rook or king moved
-            # TODO: Long castle
             # Castling
             if piece.type == "king" and abs(x1-x2) == 2:
                 rook_x = 7 if x1 < x2 else 0
                 rook = self.get_piece(piece.color+"_rook_"+str(rook_x))
-                new_rook_x = 5 if rook_x == 7 else 2
+                new_rook_x = 5 if rook_x == 7 else 3
                 rook_y = rook.position[0]
                 self.pieces_coords[rook] = (rook_y, new_rook_x)
                 rook.move(new_rook_x, rook_y)
