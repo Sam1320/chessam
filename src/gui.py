@@ -95,7 +95,6 @@ class GameBoard(Frame):
         y2, x2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
                                  self.pieces_coords, self.player)
-        castle = piece.castle(x2, y2, self.coords_pieces)
         if valid:
 
             self.coords_pieces[(y1, x1)] = None
@@ -113,19 +112,22 @@ class GameBoard(Frame):
             # Normal move
             else:
                 self.pieces_coords[piece] = (y2, x2)
-                piece.set_position((y2, x2))
                 self.coords_pieces[(y2, x2)] = piece
+                piece.move(x2, y2)
                 x0 = (x2 * self.size) + int(self.size/2)
                 y0 = (y2 * self.size) + int(self.size/2)
                 self.canvas.coords(piece.name, x0, y0)
 
+            # TODO: Dont allow castling if rook or king moved
+            # TODO: Long castle
             # Castling
-            if castle:
+            if piece.type == "king" and abs(x1-x2) == 2:
                 rook_x = 7 if x1 < x2 else 0
                 rook = self.get_piece(piece.color+"_rook_"+str(rook_x))
                 new_rook_x = 5 if rook_x == 7 else 2
                 rook_y = rook.position[0]
                 self.pieces_coords[rook] = (rook_y, new_rook_x)
+                rook.move(new_rook_x, rook_y)
                 x0 = (new_rook_x * self.size) + int(self.size/2)
                 y0 = (rook_y * self.size) + int(self.size/2)
                 self.canvas.coords(rook.name, x0, y0)
@@ -386,7 +388,7 @@ class GameBoard(Frame):
         self.pieces_coords[piece] = (y2, x2)
         self.coords_pieces[(y1, x1)] = None
         self.coords_pieces[(y2, x2)] = piece
-        piece.set_position((y2, x2))
+        piece.move(x2, y2)
 
         for p in self.pieces_coords:
             if p.color == color and p.type == "king":
@@ -398,7 +400,7 @@ class GameBoard(Frame):
         self.pieces_coords[old_piece] = (y2, x2)
         self.coords_pieces[(y1, x1)] = piece
         self.pieces_coords[piece] = (y1, x1)
-        piece.set_position((y1, x1))
+        piece.move(x1, y1)
 
         return check
 

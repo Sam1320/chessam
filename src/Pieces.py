@@ -1,10 +1,12 @@
 from copy import deepcopy
+
 class Piece:
     def __init__(self, color, position, player):
         self.position = position
         self.color = color
         self.player = player
         self.type = None
+        self.moved = False
 
     @staticmethod
     def on_board(x, y):
@@ -15,6 +17,12 @@ class Piece:
     # The king is the only piece that overrides this method
     def castle(self, x, y, coords):
         return False
+
+    def move(self, x, y):
+        self.position = (y, x)
+        if not self.moved:
+            self.moved = True
+
 
     def set_position(self, position):
         self.position = position
@@ -112,8 +120,7 @@ class Pawn(Piece):
             return True
         return False
 
-    def move(self, x1, y1, x2, y2, coords_pieces):
-        pass
+
 
 
 class Rook(Piece):
@@ -276,7 +283,7 @@ class King(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
         self.moved = False
-        self.rook_moved = {1: False, 0: False}
+        self.rooks = []
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y, x = self.position
