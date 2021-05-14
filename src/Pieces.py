@@ -283,7 +283,13 @@ class King(Piece):
         self.name = self.color + "_" + self.type + "_" + str(position[1])
         self.value = 3
         self.moved = False
-        self.rooks = []
+        self.rooks = None
+
+    def add_rooks(self, name_piece):
+        rook_left = name_piece[f"{self.color}_rook_0"]
+        rook_right = name_piece[f"{self.color}_rook_7"]
+        assert rook_left and rook_right
+        self.rooks = {0: rook_left, 1: rook_right}
 
     def possible_moves(self, coords_pieces, pieces_coords, player):
         y, x = self.position
@@ -312,7 +318,7 @@ class King(Piece):
                 and not coords_pieces[(y1, x1 + ((x2 - x1) / 2))]
                 and not coords_pieces[(y2, x2)]
                 and not self.moved
-                and not self.rook_moved[x1 < x2]):
+                and not self.rooks[x1 < x2].moved):
             return True
         return False
 

@@ -28,6 +28,7 @@ class GameBoard(Frame):
         self.color2 = color2
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
+        self.name_piece = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
         self.check_label = Label(text="No checks", width=20)
         self.check_label.grid(row=2, column=1, pady=1)
@@ -71,6 +72,7 @@ class GameBoard(Frame):
             piece = King(color, position, player)
         else:
             raise Exception(f"{piece_type} is not a valid piece_type.")
+        assert piece
         return piece
 
     def add_piece(self, color, piece_type, player,  image, row, column):
@@ -79,7 +81,10 @@ class GameBoard(Frame):
         self.canvas.create_image(0, 0, image=image, tags=(piece.name, "piece"),
                                  anchor="c")
         self.pieces_coords[piece] = piece.position
+        self.name_piece[piece.name] = piece
         self.coords_pieces[piece.position] = piece
+
+
         x0 = (piece.position[1] * self.size) + int(self.size/2)
         y0 = (piece.position[0] * self.size) + int(self.size/2)
         self.canvas.coords(piece.name, x0, y0)
@@ -334,6 +339,12 @@ class GameBoard(Frame):
             if c == 4:
                 self.add_piece("white", "king", white_player, images["white_king"], 7, c)
                 self.add_piece("black", "king", black_player, images["black_king"], 0, c)
+
+        # Kings track rooks to know if they can castle latter
+        white_king = self.name_piece["white_king_4"]
+        black_king = self.name_piece["black_king_4"]
+        white_king.add_rooks(self.name_piece)
+        black_king.add_rooks(self.name_piece)
 
     def coords_to_row_col(self, x, y):
         size = self.size
