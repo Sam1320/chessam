@@ -6,7 +6,8 @@ import random
 
 # DONE: castling
 # DONE: fix all that broke after great refactor
-
+# TODO: automate bot piece promotion selection
+# TODO: add castling and en passant as possible moves
 # TODO: verify double check
 # TODO: stalemate
 # TODO: en passant
@@ -314,7 +315,7 @@ class GameBoard(Frame):
         self.canvas.tag_raise("piece")
         self.canvas.tag_lower("square")
 
-    def move_player2(self):
+    def available_moves(self):
         possible_moves = {}
         for p in self.pieces_coords:
             if p: #something weird happening when castling line could be removed
@@ -326,11 +327,42 @@ class GameBoard(Frame):
                         player=self.player)
                     if moves:
                         possible_moves[p] = moves
+        return possible_moves
+
+    def random_move(self):
+        possible_moves = self.available_moves()
         if possible_moves:
             piece = random.choice(list(possible_moves.keys()))
             move = random.choice(possible_moves[piece])
-            # TODO: FIX this for fuck sakes
+            # TODO: FIX this for fucks sake
             move = (move[1], move[0])
+            return piece, move
+
+    def available_attacks(self):
+        possible_moves = self.available_moves()
+        attacking_moves = {}
+        if possible_moves:
+            for piece, moves in possible_moves.items():
+                # TODO: JUST USE x and y and NOT row and col
+                attacks = [i for i in moves if
+                           self.coords_pieces[(i[1], i[0])]]
+                if attacks:
+                    attacking_moves[piece] = attacks
+        return attacking_moves
+
+    def random_attack(self):
+        attacking_moves = self.available_attacks()
+        if attacking_moves:
+            piece = random.choice(list(attacking_moves.keys()))
+            move = random.choice(attacking_moves[piece])
+            # TODO: JUST USE x and y and NOT row and col
+            move = (move[1], move[0])
+            return piece, move
+        return self.random_move()
+
+    def move_player2(self):
+            # piece, move = self.random_move()
+            piece, move = self.random_attack()
             self.place_piece(piece, move)
 
 
