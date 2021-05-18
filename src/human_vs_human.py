@@ -6,6 +6,7 @@ import random
 
 # DONE: castling
 # DONE: fix all that broke after great refactor
+# TODO: create abstract gui class and different guis for each type of game
 # TODO: automate bot piece promotion selection
 # TODO: add castling and en passant as possible moves
 # TODO: verify double check
@@ -521,4 +522,3 @@ if __name__ == "__main__":
     # Avoid window resizing
     root.resizable(0, 0)
     root.mainloop()
-
