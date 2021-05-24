@@ -2,6 +2,7 @@ from src import gui
 from tkinter import *
 import random
 
+# TODO: FIX BOT QUEEN MOVING LIKE CRAZY
 # DONE: castling
 # DONE: fix all that broke after great refactor
 # TODO: create abstract gui class and different guis for each type of game
@@ -19,6 +20,95 @@ import random
 
 
 class HumanBot(gui.GameBoard):
+
+    def place_piece(self, piece, position):
+
+        y1, x1 = piece.position
+        y2, x2 = position
+        valid = piece.valid_move(x2, y2, self.coords_pieces,
+                                 self.pieces_coords, self.player,
+                                 self.name_piece)
+        if valid:
+
+            self.coords_pieces[(y1, x1)] = None
+            # if target square is occupied then delete the taken piece
+            if self.coords_pieces[(y2, x2)]:
+                dead_piece = self.coords_pieces[(y2, x2)]
+                # TODO: find optimal solution
+                self.canvas.coords(dead_piece.name, -self.size, -self.size)
+                # free previous square in coord_pieces dict
+                self.pieces_coords[dead_piece] = None
+
+            # en passant
+            if piece.type == "pawn" and self.name_piece["en_passant"]:
+                to_take = self.name_piece["en_passant"]
+                y3, x3 = to_take.position
+                if x3 == x2 and y3 == y1:
+                    self.canvas.coords(to_take.name, -self.size, -self.size)
+                    self.pieces_coords[to_take] = None
+
+            # en passant possible next move
+            if piece.type == "pawn" and abs(y1 - y2) == 2:
+                self.name_piece["en_passant"] = piece
+            else:
+                self.name_piece["en_passant"] = None
+
+            # Pawn promotion
+            if (y2 == 7 or y2 == 0) and piece.type == "pawn":
+                if self.player == 1:
+                    self.pawn_promotion(piece, y2, x2)
+                else:
+                    self.promote(piece, "queen", y2, x2)
+
+            # Normal move
+            else:
+                self.pieces_coords[piece] = (y2, x2)
+                self.coords_pieces[(y2, x2)] = piece
+                piece.move(x2, y2)
+                x0 = (x2 * self.size) + int(self.size / 2)
+                y0 = (y2 * self.size) + int(self.size / 2)
+                self.canvas.coords(piece.name, x0, y0)
+
+            # Castling
+            if piece.type == "king" and abs(x1 - x2) == 2:
+                rook_x = 7 if x1 < x2 else 0
+                rook = self.get_piece(piece.color + "_rook_" + str(rook_x))
+                new_rook_x = 5 if rook_x == 7 else 3
+                rook_y = rook.position[0]
+                self.pieces_coords[rook] = (rook_y, new_rook_x)
+                self.coords_pieces[(rook_y, new_rook_x)] = rook
+                rook.move(new_rook_x, rook_y)
+                x0 = (new_rook_x * self.size) + int(self.size / 2)
+                y0 = (rook_y * self.size) + int(self.size / 2)
+                self.canvas.coords(rook.name, x0, y0)
+
+            # Checks
+            if self.king_checked(self.opponent_color()):
+                if not self.protect_possible(piece, x2, y2):
+                    self.check_label.config(text="CHECKMATE!")
+                else:
+                    self.check = True
+                    self.check_label.config(text="CHECK!")
+            else:
+                self.check_label.config(text="no checks")
+
+        return valid
+
+    def promote(self, piece, new_type, row, col):
+        self.canvas.coords(piece.name, -self.size, -self.size)
+
+        color = piece.color
+        player = 2 if self.player == 1 else 1
+        new_piece = self.create_piece(color, new_type, (row, col), player)
+        self.canvas.create_image(0, 0,
+                                 image=self.images_dic[color+"_"+new_type],
+                                 tags=(new_piece.name, "piece"),
+                                 anchor="c")
+        self.pieces_coords[new_piece] = (row, col)
+        self.coords_pieces[(row, col)] = new_piece
+        x0 = (col * self.size) + int(self.size / 2)
+        y0 = (row * self.size) + int(self.size / 2)
+        self.canvas.coords(new_piece.name, x0, y0)
 
     def available_moves(self):
         possible_moves = {}
