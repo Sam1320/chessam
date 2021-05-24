@@ -2,12 +2,10 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 from src.Pieces import *
-import random
 
 # DONE: castling
 # DONE: fix all that broke after great refactor
-# TODO: automate bot piece promotion selection
-# TODO: add castling and en passant as possible moves
+
 # TODO: verify double check
 # TODO: stalemate
 # TODO: en passant
@@ -24,25 +22,20 @@ class GameBoard(Frame):
                  color2="gray"):
 
         super(GameBoard, self).__init__(master=parent)
-        # Board attributes
         self.rows = rows
         self.columns = columns
         self.size = size
         self.color1 = color1
         self.color2 = color2
-
-        # Game attributes
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
         self.name_piece = defaultdict(lambda: None)
         self.images_dic = Images.load_images()
         self.check_label = Label(text="No checks", width=20)
         self.check_label.grid(row=2, column=1, pady=1)
-        # self.select_label = Label(text="row:  col:  ", width=20)
-        # self.select_label.grid(row=2, column=2, pady=1)
-        self.start_b = Button(text="start",width=20, command=self.start)
-        self.start_b.grid(row=2, column=2, pady=1)
         self.turn_label = Label(text="Turn: Player 1", width=20)
+        self.select_label = Label(text="row:  col:  ", width=20)
+        self.select_label.grid(row=2, column=2, pady=1)
         self.turn_label.grid(row=2, column=3, pady=1)
         canvas_width = columns * size
         canvas_height = rows * size
@@ -51,8 +44,9 @@ class GameBoard(Frame):
         self.player = 1
         self.player_1_color = "white"
         self.check = False
-
-
+        self.king_moved = {"white": False, "black": True}
+        # 1 is right rook, 0 is left rook
+        self.rook_moved = {1: False, 0: False}
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
                              width=canvas_width, height=canvas_height,
                              background="bisque")
@@ -61,9 +55,6 @@ class GameBoard(Frame):
         # changes the window size
         self.canvas.bind("<Configure>", self.refresh)
         self.canvas.bind("<Button-1>", self.select)
-
-    def start(self):
-        pass
 
     @staticmethod
     def create_piece(color, piece_type, position, player):
@@ -117,7 +108,6 @@ class GameBoard(Frame):
                 dead_piece = self.coords_pieces[(y2, x2)]
                 # TODO: find optimal solution
                 self.canvas.coords(dead_piece.name, -self.size, -self.size)
-                dead_piece.taken = True
                 # free previous square in coord_pieces dict
                 self.pieces_coords[dead_piece] = None
 
@@ -315,84 +305,6 @@ class GameBoard(Frame):
         self.canvas.tag_raise("piece")
         self.canvas.tag_lower("square")
 
-    def available_moves(self):
-        possible_moves = {}
-        for p in self.pieces_coords:
-            if p: #something weird happening when castling line could be removed
-                if not p.taken and p.color == self.current_color():
-                    moves = p.possible_moves(
-                        coords_pieces=self.coords_pieces,
-                        pieces_coords=self.pieces_coords,
-                        name_piece=self.name_piece,
-                        player=self.player)
-                    if moves:
-                        possible_moves[p] = moves
-        return possible_moves
-
-    def random_move(self):
-        possible_moves = self.available_moves()
-        if possible_moves:
-            piece = random.choice(list(possible_moves.keys()))
-            move = random.choice(possible_moves[piece])
-            # TODO: FIX this for fucks sake
-            move = (move[1], move[0])
-            return piece, move
-
-    def available_attacks(self):
-        possible_moves = self.available_moves()
-        attacking_moves = {}
-        if possible_moves:
-            for piece, moves in possible_moves.items():
-                # TODO: JUST USE x and y and NOT row and col
-                attacks = [i for i in moves if
-                           self.coords_pieces[(i[1], i[0])]]
-                if attacks:
-                    attacking_moves[piece] = attacks
-        return attacking_moves
-
-    def random_attack(self):
-        attacking_moves = self.available_attacks()
-        if attacking_moves:
-            piece = random.choice(list(attacking_moves.keys()))
-            move = random.choice(attacking_moves[piece])
-            # TODO: JUST USE x and y and NOT row and col
-            move = (move[1], move[0])
-            return piece, move
-        return self.random_move()
-
-    def move_player2(self):
-            # piece, move = self.random_move()
-            piece, move = self.random_attack()
-            self.place_piece(piece, move)
-
-
-    def select(self, e):
-        # TODO: fix selecting empty square bug
-        if self.selected:
-            row, col = self.coords_to_row_col(e.x, e.y)
-            self.canvas.delete("selected")
-            valid = self.place_piece(self.selected_piece, (row, col))
-            self.selected_piece = None
-            self.selected = False
-            if valid:
-                self.player = 2 if self.player == 1 else 1
-                self.move_player2()
-                self.player = 2 if self.player == 1 else 1
-                self.turn_label.config(text="Turn: Player " +str(self.player))
-        else:
-            row, col = self.coords_to_row_col(e.x, e.y)
-            x1 = (col * self.size)
-            y1 = (row * self.size)
-            x2 = x1 + self.size
-            y2 = y1 + self.size
-            self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
-                                         fill="red", tags="selected")
-            # self.select_label.config(text="row: "+str(row)+" col: "+str(col))
-            self.canvas.tag_raise("piece")
-            piece = self.coords_pieces[(row, col)]
-            if piece:
-                self.selected = True
-                self.selected_piece = piece
 
     def setup_board(self):
         images = self.images_dic
@@ -516,9 +428,9 @@ class GameBoard(Frame):
 if __name__ == "__main__":
     root = Tk()
     board = GameBoard(root)
+    #board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
     board.grid(row=0, columnspan=6, padx=4, pady=4)
     board.setup_board()
     # Avoid window resizing
     root.resizable(0, 0)
     root.mainloop()
-
