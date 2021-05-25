@@ -2,6 +2,9 @@ from src import gui
 from tkinter import *
 import random
 
+# TODO: bot doesnt take en passant
+# TODO: bug when promoting against bot
+# TODO: Store game states to be able to undo
 # TODO: FIX BOT QUEEN MOVING LIKE CRAZY
 # DONE: castling
 # DONE: fix all that broke after great refactor
@@ -38,6 +41,7 @@ class HumanBot(gui.GameBoard):
                 self.canvas.coords(dead_piece.name, -self.size, -self.size)
                 # free previous square in coord_pieces dict
                 self.pieces_coords[dead_piece] = None
+                dead_piece.taken = True
 
             # en passant
             if piece.type == "pawn" and self.name_piece["en_passant"]:
@@ -97,11 +101,11 @@ class HumanBot(gui.GameBoard):
     def promote(self, piece, new_type, row, col):
         self.canvas.coords(piece.name, -self.size, -self.size)
 
-        color = piece.color
         player = 2 if self.player == 1 else 1
-        new_piece = self.create_piece(color, new_type, (row, col), player)
+        piece.taken = True
+        new_piece = self.create_piece(piece.color, new_type, (row, col), player)
         self.canvas.create_image(0, 0,
-                                 image=self.images_dic[color+"_"+new_type],
+                                 image=self.images_dic[piece.color+"_"+new_type],
                                  tags=(new_piece.name, "piece"),
                                  anchor="c")
         self.pieces_coords[new_piece] = (row, col)
@@ -181,7 +185,6 @@ class HumanBot(gui.GameBoard):
             y2 = y1 + self.size
             self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
                                          fill="red", tags="selected")
-            # self.select_label.config(text="row: "+str(row)+" col: "+str(col))
             self.canvas.tag_raise("piece")
             piece = self.coords_pieces[(row, col)]
             if piece:
