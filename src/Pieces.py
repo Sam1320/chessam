@@ -7,6 +7,7 @@ class Piece:
         self.player = player
         self.type = None
         self.moved = False
+        self.taken = False
 
     @staticmethod
     def on_board(x, y):
@@ -93,7 +94,7 @@ class Pawn(Piece):
         # move upwards if player 1 else move downwards
         sign = -1 if self.player == 1 else 1
         options = [(sign*1, 1), (sign*1, 0), (sign*1, -1), (sign*2, 0)]
-        for col, row in options:
+        for row, col in options:
             if self.valid_move(x1+col, y1+row, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+col, y1+row))
         return moves
