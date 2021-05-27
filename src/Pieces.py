@@ -20,7 +20,7 @@ class Piece:
         return False
 
     def move(self, x, y):
-        self.position = (y, x)
+        self.position = (x, y)
         if not self.moved:
             self.moved = True
 
@@ -29,7 +29,7 @@ class Piece:
         self.position = position
 
     def friend_here(self, x, y, coords_pieces):
-        taken = coords_pieces[(y, x)]
+        taken = coords_pieces[(x, y)]
         if taken:
             if self.color == taken.color:
                 return True
@@ -42,16 +42,16 @@ class Piece:
         return False
 
     def my_king_checked(self, x2, y2, coords_pieces, pieces_coords):
-        y1, x1 = self.position
+        x1, y1 = self.position
         # assume no check
         check = False
         # simulate move
-        old_piece = coords_pieces[(y2, x2)]
+        old_piece = coords_pieces[(x2, y2)]
         pieces_coords[old_piece] = None
-        pieces_coords[self] = (y2, x2)
-        self.set_position((y2, x2))
-        coords_pieces[(y1, x1)] = None
-        coords_pieces[(y2, x2)] = self
+        pieces_coords[self] = (x2, y2)
+        self.set_position((x2, y2))
+        coords_pieces[(x1, y1)] = None
+        coords_pieces[(x2, y2)] = self
 
         if self.type == "king":
             check = self.checked(coords_pieces)
@@ -63,11 +63,11 @@ class Piece:
                         break
 
         # restore position
-        coords_pieces[(y2, x2)] = old_piece
-        pieces_coords[old_piece] = (y2, x2)
-        coords_pieces[(y1, x1)] = self
-        pieces_coords[self] = (y1, x1)
-        self.set_position((y1, x1))
+        coords_pieces[(x2, y2)] = old_piece
+        pieces_coords[old_piece] = (x2, y2)
+        coords_pieces[(x1, y1)] = self
+        pieces_coords[self] = (x1, y1)
+        self.set_position((x1, y1))
         return check
 
     def legal_move(self, x, y, coords_pieces, pieces_coords, player):
@@ -89,14 +89,14 @@ class Pawn(Piece):
         self.value = 1
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
-        y1, x1 = self.position
+        x1, y1 = self.position
         moves = []
         # move upwards if player 1 else move downwards
         sign = -1 if self.player == 1 else 1
-        options = [(sign*1, 1), (sign*1, 0), (sign*1, -1), (sign*2, 0)]
-        for row, col in options:
-            if self.valid_move(x1+col, y1+row, coords_pieces, pieces_coords, player, name_piece):
-                moves.append((x1+col, y1+row))
+        options = [(1, sign*1), (0, sign*1), (-1, sign*1), (0, sign*2)]
+        for x, y in options:
+            if self.valid_move(x1+x, y1+y, coords_pieces, pieces_coords, player, name_piece):
+                moves.append((x1+x, y1+y))
         return moves
 
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
@@ -104,8 +104,8 @@ class Pawn(Piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
 
-        y1, x1 = self.position
-        taken = coords_pieces[(y2, x2)]
+        x1, y1 = self.position
+        taken = coords_pieces[(x2, y2)]
         passant = name_piece["en_passant"]
         # One move forward
         if not taken and ((x1 == x2 and y1 == y2 + 1 and self.player == 1) or
@@ -138,7 +138,7 @@ class Rook(Piece):
         self.value = 5
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
-        y1, x1 = self.position
+        x1, y1 = self.position
         moves = []
         for i in range(1, 8):
             if self.valid_move(x1+i, y1, coords_pieces, pieces_coords, player, name_piece):
@@ -154,27 +154,27 @@ class Rook(Piece):
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
-        y1, x1 = self.position
+        x1, y1 = self.position
         if (x1 == x2 or y1 == y2) and (x1 != x2 or y1 != y2):
             # upward movement
             if x1 == x2 and y1 > y2:
                 for i in range(1, abs(y1 - y2)):
-                    if coords_pieces[(y1 - i, x1)]:
+                    if coords_pieces[(x1, y1-i)]:
                         return False
             # downward movement
             elif x1 == x2 and y1 < y2:
                 for i in range(1, abs(y1 - y2)):
-                    if coords_pieces[(y1 + i, x1)]:
+                    if coords_pieces[(x1, y1+i)]:
                         return False
             # rightward movement
             elif x1 < x2 and y1 == y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(y1, x1 + i)]:
+                    if coords_pieces[(x1, y1+i)]:
                         return False
             # leftward movement
             elif x1 > x2 and y1 == y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(y1, x1 - i)]:
+                    if coords_pieces[(x1, y1-i)]:
                         return False
             return True
         else:
@@ -189,19 +189,19 @@ class Knight(Piece):
         self.value = 3
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
-        y, x = self.position
+        x1, y1 = self.position
         moves = []
         options = [(-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2),
                    (-2, -1), (-2, 1)]
-        for r, c in options:
-            if self.valid_move(x+c, y+r, coords_pieces, pieces_coords, player, name_piece):
-                moves.append((x+c, y+r))
+        for x, y in options:
+            if self.valid_move(x1+x, y1+y, coords_pieces, pieces_coords, player, name_piece):
+                moves.append((x1+x, y1+y))
         return moves
 
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
-        y1, x1 = self.position
+        x1, y1 = self.position
         if (abs(x1 - x2) == 2 and abs(y1 - y2) == 1) or \
                 (abs(x1 - x2) == 1 and abs(y1 - y2) == 2):
             return True
@@ -216,7 +216,7 @@ class Bishop(Piece):
         self.value = 3
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
-        y1, x1 = self.position
+        x1, y1 = self.position
         moves = []
         for i in range(1, 8):
             if self.valid_move(x1-i, y1+i, coords_pieces, pieces_coords, player, name_piece):
@@ -232,27 +232,27 @@ class Bishop(Piece):
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
-        y1, x1 = self.position
+        x1, y1 = self.position
         if abs(x1 - x2) == abs(y1 - y2):
             # up and right movement
             if x1 < x2 and y1 > y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(y1 - i, x1 + i)]:
+                    if coords_pieces[(x1 + i, y1 - i)]:
                         return False
             # down and right movement
             elif x1 < x2 and y1 < y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(y1 + i, x1 + i)]:
+                    if coords_pieces[(x1 + i, y1 + i)]:
                         return False
             # up and left movement
             elif x1 > x2 and y1 > y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(y1 - i, x1 - i)]:
+                    if coords_pieces[(x1 - i, y1 - i)]:
                         return False
             # down and left movement
             elif x1 > x2 and y1 < y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(y1 + i, x1 - i)]:
+                    if coords_pieces[(x1 - i, y1 + i)]:
                         return False
             return True
         else:
@@ -299,19 +299,19 @@ class King(Piece):
         self.rooks = {0: rook_left, 1: rook_right}
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
-        y, x = self.position
+        x1, y1 = self.position
         moves = []
         options = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1),
                    (0, -1), (-1, -1)]
-        for row, col in options:
-            if self.valid_move(x+col, y+row, coords_pieces, pieces_coords, player, name_piece):
-                moves.append((x+col, y+row))
+        for x, y in options:
+            if self.valid_move(x1+x, y1+y, coords_pieces, pieces_coords, player, name_piece):
+                moves.append((x1+x, y1+y))
         return moves
 
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
         if not self.legal_move(x2, y2, coords_pieces, pieces_coords, player):
             return False
-        y1, x1 = self.position
+        x1, y1 = self.position
         if max(abs(x1-x2), abs(y1-y2)) == 1:
             if not self.friend_here(x2, y2, coords_pieces):
                 return True
@@ -320,12 +320,12 @@ class King(Piece):
         return False
 
     def castle(self, x2, y2, coords_pieces, pieces_coords):
-        y1, x1 = self.position
+        x1, y1 = self.position
 
         diff = x2-x1
         if (abs(diff) == 2
-                and not coords_pieces[(y1, x1 + int((diff / 2)))]
-                and not coords_pieces[(y2, x2)]
+                and not coords_pieces[(x1, y1 + int((diff / 2)))]
+                and not coords_pieces[(x2, y2)]
                 and not self.moved
                 and not self.rooks[x1 < x2].moved)\
                 and not self.my_king_checked(x1+int((diff/2)), y1, coords_pieces, pieces_coords):
@@ -338,10 +338,10 @@ class King(Piece):
         check = False
         # check diagonals for pawns, queens or bishops
         i = 1
-        y, x = self.position
+        x, y = self.position
         # up and right
         while 0 <= y-i <= 7 and 0 <= x+i <= 7:
-            piece = coords_pieces[(y-i, x+i)]
+            piece = coords_pieces[(x+i, y-i)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"bishop", "queen"}) or
@@ -353,7 +353,7 @@ class King(Piece):
         # up and left
         i = 1
         while 0 <= y-i <= 7 and 0 <= x-i <= 7:
-            piece = coords_pieces[(y-i, x-i)]
+            piece = coords_pieces[(x-i, y-i)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"bishop", "queen"}) or
@@ -365,7 +365,7 @@ class King(Piece):
         # down and right
         i = 1
         while 0 <= y+i <= 7 and 0 <= x+i <= 7:
-            piece = coords_pieces[(y+i, x+i)]
+            piece = coords_pieces[(x+i, y+i)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"bishop", "queen"}) or
@@ -377,7 +377,7 @@ class King(Piece):
         # down and left
         i = 1
         while 0 <= y+i <= 7 and 0 <= x-i <= 7:
-            piece = coords_pieces[(y+i, x-i)]
+            piece = coords_pieces[(x-i, y+i)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"bishop", "queen"}) or
@@ -390,7 +390,7 @@ class King(Piece):
         # up
         i = 1
         while 0 <= y-i <= 7:
-            piece = coords_pieces[(y-i, x)]
+            piece = coords_pieces[(x, y-i)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
@@ -401,7 +401,7 @@ class King(Piece):
         # down
         i = 1
         while 0 <= y+i <= 7:
-            piece = coords_pieces[(y+i, x)]
+            piece = coords_pieces[(x, y+i)] 
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
@@ -412,7 +412,7 @@ class King(Piece):
         # right
         i = 1
         while 0 <= x+i <= 7:
-            piece = coords_pieces[(y, x+i)]
+            piece = coords_pieces[(x+i, y)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
@@ -423,7 +423,7 @@ class King(Piece):
         # left
         i = 1
         while 0 <= x-i <= 7:
-            piece = coords_pieces[(y, x-i)]
+            piece = coords_pieces[(x-i, y)]
             if piece:
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
@@ -436,7 +436,7 @@ class King(Piece):
         knight_positions = [(-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2),
                             (-2, -1), (-2, 1)]
         for i, j in knight_positions:
-            piece = coords_pieces[(y - i, x + j)]
+            piece = coords_pieces[(x+j, y-i)]
             if piece:
                 if piece.type == "knight" and piece.color != self.color:
                     check = True
