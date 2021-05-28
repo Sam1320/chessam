@@ -76,7 +76,7 @@ class HumanBot(gui.GameBoard):
             for piece, moves in possible_moves.items():
                 # TODO: JUST USE x and y and NOT row and col
                 attacks = [move for move in moves if
-                           self.coords_pieces[moves]]
+                           self.coords_pieces[move]]
                 if attacks:
                     attacking_moves[piece] = attacks
         return attacking_moves

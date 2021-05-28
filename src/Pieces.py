@@ -85,7 +85,7 @@ class Pawn(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
         self.type = "pawn"
-        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.name = self.color + "_" + self.type + "_" + str(position[0])
         self.value = 1
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
@@ -112,9 +112,11 @@ class Pawn(Piece):
                           (x1 == x2 and y1 == y2 - 1 and self.player == 2)):
             return True
         # Two moves forward and first move
-        elif not taken and ((y1 == 1 or y1 == 6) and
-                            ((x1 == x2 and y1 == y2 + 2 and self.player == 1) or
-                            (x1 == x2 and y1 == y2 - 2 and self.player == 2))):
+        elif not taken and (
+                (y1 == 6 and x1 == x2 and y1 == y2 + 2
+                 and self.player == 1 and not coords_pieces[(x1, y1-1)]) or
+                (y1 == 1 and x1 == x2 and y1 == y2 - 2
+                 and self.player == 2 and not coords_pieces[(x1, y1+1)])):
             return True
         # One square diagonal and take
         elif taken and ((abs(x1 - x2) == 1 and y1 == y2 + 1 and self.player == 1) or
@@ -122,7 +124,7 @@ class Pawn(Piece):
             return True
         # En passant
         elif passant:
-            y3, x3 = passant.position
+            x3, y3 = passant.position
             if x3 == x2 and y3 == y1:
                 return True
         return False
@@ -134,7 +136,7 @@ class Rook(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
         self.type = "rook"
-        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.name = self.color + "_" + self.type + "_" + str(position[0])
         self.value = 5
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
@@ -169,12 +171,12 @@ class Rook(Piece):
             # rightward movement
             elif x1 < x2 and y1 == y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(x1, y1+i)]:
+                    if coords_pieces[(x1+i, y1)]:
                         return False
             # leftward movement
             elif x1 > x2 and y1 == y2:
                 for i in range(1, abs(x1 - x2)):
-                    if coords_pieces[(x1, y1-i)]:
+                    if coords_pieces[(x1-i, y1)]:
                         return False
             return True
         else:
@@ -185,7 +187,7 @@ class Knight(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
         self.type = "knight"
-        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.name = self.color + "_" + self.type + "_" + str(position[0])
         self.value = 3
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
@@ -212,7 +214,7 @@ class Bishop(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
         self.type = "bishop"
-        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.name = self.color + "_" + self.type + "_" + str(position[0])
         self.value = 3
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
@@ -263,7 +265,7 @@ class Queen(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
         self.type = "queen"
-        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.name = self.color + "_" + self.type + "_" + str(position[0])
         self.value = 9
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
@@ -287,7 +289,7 @@ class King(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
         self.type = "king"
-        self.name = self.color + "_" + self.type + "_" + str(position[1])
+        self.name = self.color + "_" + self.type + "_" + str(position[0])
         self.value = 3
         self.moved = False
         self.rooks = None

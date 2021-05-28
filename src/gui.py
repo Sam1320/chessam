@@ -38,10 +38,7 @@ class GameBoard(Frame):
         self.images_dic = Images.load_images()
         self.check_label = Label(text="No checks", width=20)
         self.check_label.grid(row=2, column=1, pady=1)
-        # self.select_label = Label(text="row:  col:  ", width=20)
-        # self.select_label.grid(row=2, column=2, pady=1)
-        self.start_b = Button(text="start",width=20, command=self.start)
-        self.start_b.grid(row=2, column=2, pady=1)
+
         self.turn_label = Label(text="Turn: Player 1", width=20)
         self.turn_label.grid(row=2, column=3, pady=1)
         canvas_width = columns * size
@@ -62,7 +59,7 @@ class GameBoard(Frame):
         self.canvas.bind("<Configure>", self.refresh)
         self.canvas.bind("<Button-1>", self.select)
 
-    def start(self):
+    def select(self, event):
         pass
 
     @staticmethod
@@ -106,7 +103,7 @@ class GameBoard(Frame):
     def place_piece(self, piece, position):
 
         x1, y1 = piece.position
-        y2, x2 = position
+        x2, y2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
                                  self.pieces_coords, self.player, self.name_piece)
         if valid:
@@ -124,7 +121,7 @@ class GameBoard(Frame):
             # en passant
             if piece.type =="pawn" and self.name_piece["en_passant"]:
                 to_take = self.name_piece["en_passant"]
-                y3, x3 = to_take.position
+                x3, y3 = to_take.position
                 if x3 == x2 and y3 == y1:
                     self.canvas.coords(to_take.name, -self.size, -self.size)
                     self.pieces_coords[to_take] = None
@@ -195,7 +192,7 @@ class GameBoard(Frame):
             if p:
                 if p.color == self.opponent_color() and p.type == "king":
                     king = p
-        king_y, king_x = king.position
+        king_x, king_y = king.position
         # determine the direction of the check
         up = True if king_y < y2 else False
         down = True if king_y > y2 else False
@@ -238,22 +235,22 @@ class GameBoard(Frame):
             if piece:
                 if piece.color == self.opponent_color() and piece.type == "king":
                     king = piece
-        king_y, king_x = king.position
+        king_x, king_y = king.position
         for i, j in [(1, 1), (1, -1), (-1, 1), (-1, -1),
                      (1, 0), (0, 1), (-1, 0), (0, -1)]:
-            if not ((0 <= king_y+i <= 7) and (0 <= king_x+j <= 7)):
+            if not ((0 <= king_x+i <= 7) and (0 <= king_y+j <= 7)):
                 continue
-            taken = self.coords_pieces[(king_y+i, king_x+j)]
+            taken = self.coords_pieces[(king_x+i, king_y+j)]
             if taken:
                 if taken.color != self.opponent_color():
                     evade = not self.checked(king,
                                              king_x, king_y,
-                                             king_x+j, king_y+i,
+                                             king_x+i, king_y+j,
                                              self.opponent_color())
             else:
                 evade = not self.checked(king,
                                          king_x, king_y,
-                                         king_x + j, king_y + i,
+                                         king_x + i, king_y + j,
                                          self.opponent_color())
             if evade:
                 break
@@ -316,84 +313,6 @@ class GameBoard(Frame):
             self.place_piece(piece, piece.position)
         self.canvas.tag_raise("piece")
         self.canvas.tag_lower("square")
-
-    def available_moves(self):
-        possible_moves = {}
-        for p in self.pieces_coords:
-            if p: #something weird happening when castling line could be removed
-                if not p.taken and p.color == self.current_color():
-                    moves = p.possible_moves(
-                        coords_pieces=self.coords_pieces,
-                        pieces_coords=self.pieces_coords,
-                        name_piece=self.name_piece,
-                        player=self.player)
-                    if moves:
-                        possible_moves[p] = moves
-        return possible_moves
-
-    def random_move(self):
-        possible_moves = self.available_moves()
-        if possible_moves:
-            piece = random.choice(list(possible_moves.keys()))
-            move = random.choice(possible_moves[piece])
-            # TODO: FIX this for fucks sake
-            move = (move[1], move[0])
-            return piece, move
-
-    def available_attacks(self):
-        possible_moves = self.available_moves()
-        attacking_moves = {}
-        if possible_moves:
-            for piece, moves in possible_moves.items():
-                # TODO: JUST USE x and y and NOT row and col
-                attacks = [i for i in moves if
-                           self.coords_pieces[(i[1], i[0])]]
-                if attacks:
-                    attacking_moves[piece] = attacks
-        return attacking_moves
-
-    def random_attack(self):
-        attacking_moves = self.available_attacks()
-        if attacking_moves:
-            piece = random.choice(list(attacking_moves.keys()))
-            move = random.choice(attacking_moves[piece])
-            # TODO: JUST USE x and y and NOT row and col
-            move = (move[1], move[0])
-            return piece, move
-        return self.random_move()
-
-    def move_player2(self):
-            # piece, move = self.random_move()
-            piece, move = self.random_attack()
-            self.place_piece(piece, move)
-
-
-    def select(self, e):
-        # TODO: fix selecting empty square bug
-        if self.selected:
-            x, y = self.coords_to_col_row(e.x, e.y)
-            self.canvas.delete("selected")
-            valid = self.place_piece(self.selected_piece, (x, y))
-            self.selected_piece = None
-            self.selected = False
-            if valid:
-                self.player = 2 if self.player == 1 else 1
-                self.move_player2()
-                self.player = 2 if self.player == 1 else 1
-                self.turn_label.config(text="Turn: Player " +str(self.player))
-        else:
-            x, y = self.coords_to_col_row(e.x, e.y)
-            x1 = (x * self.size)
-            y1 = (y * self.size)
-            x2 = x1 + self.size
-            y2 = y1 + self.size
-            self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
-                                         fill="red", tags="selected")
-            self.canvas.tag_raise("piece")
-            piece = self.coords_pieces[(x, y)]
-            if piece:
-                self.selected = True
-                self.selected_piece = piece
 
     def setup_board(self):
         images = self.images_dic
