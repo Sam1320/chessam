@@ -23,95 +23,29 @@ import random
 
 
 class HumanBot(gui.GameBoard):
+    def __init__(self, parent):
+        super(HumanBot, self).__init__(parent)
+        self.type = "human_vs_bot"
 
-    def place_piece(self, piece, position):
+    def promotion(self, piece, x, y):
+        if self.player == 1:
+            self.pawn_promotion(piece, x, y)
+        else:
+            self.promote_bot(piece, "queen", x, y)
 
-        y1, x1 = piece.position
-        y2, x2 = position
-        valid = piece.valid_move(x2, y2, self.coords_pieces,
-                                 self.pieces_coords, self.player,
-                                 self.name_piece)
-        if valid:
-
-            self.coords_pieces[(y1, x1)] = None
-            # if target square is occupied then delete the taken piece
-            if self.coords_pieces[(y2, x2)]:
-                dead_piece = self.coords_pieces[(y2, x2)]
-                # TODO: find optimal solution
-                self.canvas.coords(dead_piece.name, -self.size, -self.size)
-                # free previous square in coord_pieces dict
-                self.pieces_coords[dead_piece] = None
-                dead_piece.taken = True
-
-            # en passant
-            if piece.type == "pawn" and self.name_piece["en_passant"]:
-                to_take = self.name_piece["en_passant"]
-                y3, x3 = to_take.position
-                if x3 == x2 and y3 == y1:
-                    self.canvas.coords(to_take.name, -self.size, -self.size)
-                    self.pieces_coords[to_take] = None
-
-            # en passant possible next move
-            if piece.type == "pawn" and abs(y1 - y2) == 2:
-                self.name_piece["en_passant"] = piece
-            else:
-                self.name_piece["en_passant"] = None
-
-            # Pawn promotion
-            if (y2 == 7 or y2 == 0) and piece.type == "pawn":
-                if self.player == 1:
-                    self.pawn_promotion(piece, y2, x2)
-                else:
-                    self.promote(piece, "queen", y2, x2)
-
-            # Normal move
-            else:
-                self.pieces_coords[piece] = (y2, x2)
-                self.coords_pieces[(y2, x2)] = piece
-                piece.move(x2, y2)
-                x0 = (x2 * self.size) + int(self.size / 2)
-                y0 = (y2 * self.size) + int(self.size / 2)
-                self.canvas.coords(piece.name, x0, y0)
-
-            # Castling
-            if piece.type == "king" and abs(x1 - x2) == 2:
-                rook_x = 7 if x1 < x2 else 0
-                rook = self.get_piece(piece.color + "_rook_" + str(rook_x))
-                new_rook_x = 5 if rook_x == 7 else 3
-                rook_y = rook.position[0]
-                self.pieces_coords[rook] = (rook_y, new_rook_x)
-                self.coords_pieces[(rook_y, new_rook_x)] = rook
-                rook.move(new_rook_x, rook_y)
-                x0 = (new_rook_x * self.size) + int(self.size / 2)
-                y0 = (rook_y * self.size) + int(self.size / 2)
-                self.canvas.coords(rook.name, x0, y0)
-
-            # Checks
-            if self.king_checked(self.opponent_color()):
-                if not self.protect_possible(piece, x2, y2):
-                    self.check_label.config(text="CHECKMATE!")
-                else:
-                    self.check = True
-                    self.check_label.config(text="CHECK!")
-            else:
-                self.check_label.config(text="no checks")
-
-        return valid
-
-    def promote(self, piece, new_type, row, col):
+    def promote_bot(self, piece, new_type, x, y):
         self.canvas.coords(piece.name, -self.size, -self.size)
-
-        player = 2 if self.player == 1 else 1
         piece.taken = True
-        new_piece = self.create_piece(piece.color, new_type, (row, col), player)
+        player = 2 if self.player == 1 else 1
+        new_piece = self.create_piece(piece.color, new_type, (x, y), player)
         self.canvas.create_image(0, 0,
                                  image=self.images_dic[piece.color+"_"+new_type],
                                  tags=(new_piece.name, "piece"),
                                  anchor="c")
-        self.pieces_coords[new_piece] = (row, col)
-        self.coords_pieces[(row, col)] = new_piece
-        x0 = (col * self.size) + int(self.size / 2)
-        y0 = (row * self.size) + int(self.size / 2)
+        self.pieces_coords[new_piece] = (x, y)
+        self.coords_pieces[(x, y)] = new_piece
+        x0 = (x * self.size) + int(self.size / 2)
+        y0 = (y * self.size) + int(self.size / 2)
         self.canvas.coords(new_piece.name, x0, y0)
 
     def available_moves(self):
@@ -133,8 +67,6 @@ class HumanBot(gui.GameBoard):
         if possible_moves:
             piece = random.choice(list(possible_moves.keys()))
             move = random.choice(possible_moves[piece])
-            # TODO: FIX this for fucks sake
-            move = (move[1], move[0])
             return piece, move
 
     def available_attacks(self):
@@ -143,8 +75,8 @@ class HumanBot(gui.GameBoard):
         if possible_moves:
             for piece, moves in possible_moves.items():
                 # TODO: JUST USE x and y and NOT row and col
-                attacks = [i for i in moves if
-                           self.coords_pieces[(i[1], i[0])]]
+                attacks = [move for move in moves if
+                           self.coords_pieces[moves]]
                 if attacks:
                     attacking_moves[piece] = attacks
         return attacking_moves
@@ -154,8 +86,6 @@ class HumanBot(gui.GameBoard):
         if attacking_moves:
             piece = random.choice(list(attacking_moves.keys()))
             move = random.choice(attacking_moves[piece])
-            # TODO: JUST USE x and y and NOT row and col
-            move = (move[1], move[0])
             return piece, move
         return self.random_move()
 
@@ -167,9 +97,9 @@ class HumanBot(gui.GameBoard):
     def select(self, e):
         # TODO: fix selecting empty square bug
         if self.selected:
-            row, col = self.coords_to_row_col(e.x, e.y)
+            x, y = self.coords_to_col_row(e.x, e.y)
             self.canvas.delete("selected")
-            valid = self.place_piece(self.selected_piece, (row, col))
+            valid = self.place_piece(self.selected_piece, (x, y))
             self.selected_piece = None
             self.selected = False
             if valid:
@@ -178,15 +108,15 @@ class HumanBot(gui.GameBoard):
                 self.player = 2 if self.player == 1 else 1
                 self.turn_label.config(text="Turn: Player " +str(self.player))
         else:
-            row, col = self.coords_to_row_col(e.x, e.y)
-            x1 = (col * self.size)
-            y1 = (row * self.size)
+            x, y = self.coords_to_col_row(e.x, e.y)
+            x1 = (x * self.size)
+            y1 = (y * self.size)
             x2 = x1 + self.size
             y2 = y1 + self.size
             self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
                                          fill="red", tags="selected")
             self.canvas.tag_raise("piece")
-            piece = self.coords_pieces[(row, col)]
+            piece = self.coords_pieces[(x, y)]
             if piece:
                 self.selected = True
                 self.selected_piece = piece

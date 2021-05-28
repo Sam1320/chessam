@@ -30,7 +30,7 @@ class GameBoard(Frame):
         self.size = size
         self.color1 = color1
         self.color2 = color2
-
+        self.type = "default"
         # Game attributes
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
@@ -135,11 +135,10 @@ class GameBoard(Frame):
             else:
                 self.name_piece["en_passant"] = None
 
-
             # Pawn promotion
             if (y2 == 7 or y2 == 0) and piece.type == "pawn":
-                self.pawn_promotion(piece, x2, y2)
-            # Normal move
+                self.promotion(piece, x2, y2)
+
             else:
                 self.pieces_coords[piece] = (x2, y2)
                 self.coords_pieces[(x2, y2)] = piece
@@ -172,6 +171,9 @@ class GameBoard(Frame):
                 self.check_label.config(text="no checks")
 
         return valid
+
+    def promotion(self, piece, x, y):
+        self.pawn_promotion(piece, x, y)
 
     def king_checked(self, color):
         check = False
@@ -493,12 +495,11 @@ class GameBoard(Frame):
 
     def promote(self, piece, new_type, x, y):
         self.canvas.coords(piece.name, -self.size, -self.size)
-
-        color = piece.color
+        piece.taken = True
         player = 2 if self.player == 1 else 1
-        new_piece = self.create_piece(color, new_type, (x, y), player)
+        new_piece = self.create_piece(piece.color, new_type, (x, y), player)
         self.canvas.create_image(0, 0,
-                                 image=self.images_dic[color+"_"+new_type],
+                                 image=self.images_dic[piece.color+"_"+new_type],
                                  tags=(new_piece.name, "piece"),
                                  anchor="c")
         self.pieces_coords[new_piece] = (x, y)
