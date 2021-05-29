@@ -3,23 +3,24 @@ from tkinter import *
 import random
 
 # TODO: bot doesnt take en passant
-# TODO: bug when promoting against bot
 # TODO: Store game states to be able to undo
-# TODO: FIX BOT QUEEN MOVING LIKE CRAZY
-# DONE: castling
-# DONE: fix all that broke after great refactor
-# TODO: create abstract gui class and different guis for each type of game
-# TODO: automate bot piece promotion selection
 # TODO: add castling and en passant as possible moves
 # TODO: verify double check
 # TODO: stalemate
-# TODO: en passant
 # TODO: add scores
 # TODO: add clocks
 # TODO: reset button
 # TODO: change pieces icons
-# TODO: use either row and col or x and y but not both
-# TODO: easy way to locate kings
+# DONE: bug when promoting against bot
+# DONE: FIX BOT QUEEN MOVING LIKE CRAZY
+# DONE: castling
+# DONE: fix all that broke after great refactor
+# DONE: create abstract gui class and different guis for each type of game
+# DONE: automate bot piece promotion selection
+# DONE: en passant
+# DONE: easy way to locate kings
+# DONE: use either row and col or x and y but not both
+
 
 
 class HumanBot(gui.GameBoard):
