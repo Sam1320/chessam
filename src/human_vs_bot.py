@@ -191,7 +191,18 @@ class HumanBot(gui.GameBoard):
             if piece:
                 self.selected = True
                 self.selected_piece = piece
+                pos_moves = piece.possible_moves(self.coords_pieces, self.pieces_coords, self.player, self.name_piece)
+                self.mark_possible_moves(pos_moves)
 
+    def mark_possible_moves(self, moves):
+        for x, y in moves:
+            x1 = x * self.size
+            y1 = y * self.size
+            x2 = x1 + self.size
+            y2 = y1 + self.size
+            self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
+                                         fill="red", tags="selected")
+            self.canvas.tag_raise("piece")
 
 if __name__ == "__main__":
     root = Tk()
