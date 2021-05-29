@@ -30,7 +30,7 @@ class GameBoard(Frame):
         self.size = size
         self.color1 = color1
         self.color2 = color2
-
+        self.type = "default"
         # Game attributes
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
@@ -38,10 +38,7 @@ class GameBoard(Frame):
         self.images_dic = Images.load_images()
         self.check_label = Label(text="No checks", width=20)
         self.check_label.grid(row=2, column=1, pady=1)
-        # self.select_label = Label(text="row:  col:  ", width=20)
-        # self.select_label.grid(row=2, column=2, pady=1)
-        self.start_b = Button(text="start",width=20, command=self.start)
-        self.start_b.grid(row=2, column=2, pady=1)
+
         self.turn_label = Label(text="Turn: Player 1", width=20)
         self.turn_label.grid(row=2, column=3, pady=1)
         canvas_width = columns * size
@@ -62,7 +59,7 @@ class GameBoard(Frame):
         self.canvas.bind("<Configure>", self.refresh)
         self.canvas.bind("<Button-1>", self.select)
 
-    def start(self):
+    def select(self, event):
         pass
 
     @staticmethod
@@ -84,9 +81,9 @@ class GameBoard(Frame):
         assert piece
         return piece
 
-    def add_piece(self, color, piece_type, player,  image, row, column):
+    def add_piece(self, color, piece_type, player,  image, x, y):
         # Add a piece to the playing board'''
-        piece = self.create_piece(color, piece_type, (row, column), player)
+        piece = self.create_piece(color, piece_type, (x, y), player)
         self.canvas.create_image(0, 0, image=image, tags=(piece.name, "piece"),
                                  anchor="c")
         self.pieces_coords[piece] = piece.position
@@ -94,8 +91,8 @@ class GameBoard(Frame):
         self.coords_pieces[piece.position] = piece
 
 
-        x0 = (piece.position[1] * self.size) + int(self.size/2)
-        y0 = (piece.position[0] * self.size) + int(self.size/2)
+        x0 = (piece.position[0] * self.size) + int(self.size/2)
+        y0 = (piece.position[1] * self.size) + int(self.size/2)
         self.canvas.coords(piece.name, x0, y0)
 
     def get_piece(self, name):
@@ -105,16 +102,16 @@ class GameBoard(Frame):
 
     def place_piece(self, piece, position):
 
-        y1, x1 = piece.position
-        y2, x2 = position
+        x1, y1 = piece.position
+        x2, y2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
                                  self.pieces_coords, self.player, self.name_piece)
         if valid:
 
-            self.coords_pieces[(y1, x1)] = None
+            self.coords_pieces[(x1, y1)] = None
             # if target square is occupied then delete the taken piece
-            if self.coords_pieces[(y2, x2)]:
-                dead_piece = self.coords_pieces[(y2, x2)]
+            if self.coords_pieces[(x2, y2)]:
+                dead_piece = self.coords_pieces[(x2, y2)]
                 # TODO: find optimal solution
                 self.canvas.coords(dead_piece.name, -self.size, -self.size)
                 dead_piece.taken = True
@@ -124,7 +121,7 @@ class GameBoard(Frame):
             # en passant
             if piece.type =="pawn" and self.name_piece["en_passant"]:
                 to_take = self.name_piece["en_passant"]
-                y3, x3 = to_take.position
+                x3, y3 = to_take.position
                 if x3 == x2 and y3 == y1:
                     self.canvas.coords(to_take.name, -self.size, -self.size)
                     self.pieces_coords[to_take] = None
@@ -135,14 +132,13 @@ class GameBoard(Frame):
             else:
                 self.name_piece["en_passant"] = None
 
-
             # Pawn promotion
             if (y2 == 7 or y2 == 0) and piece.type == "pawn":
-                self.pawn_promotion(piece, y2, x2)
-            # Normal move
+                self.promotion(piece, x2, y2)
+
             else:
-                self.pieces_coords[piece] = (y2, x2)
-                self.coords_pieces[(y2, x2)] = piece
+                self.pieces_coords[piece] = (x2, y2)
+                self.coords_pieces[(x2, y2)] = piece
                 piece.move(x2, y2)
                 x0 = (x2 * self.size) + int(self.size/2)
                 y0 = (y2 * self.size) + int(self.size/2)
@@ -173,6 +169,9 @@ class GameBoard(Frame):
 
         return valid
 
+    def promotion(self, piece, x, y):
+        self.pawn_promotion(piece, x, y)
+
     def king_checked(self, color):
         check = False
         for p in self.pieces_coords:
@@ -193,7 +192,7 @@ class GameBoard(Frame):
             if p:
                 if p.color == self.opponent_color() and p.type == "king":
                     king = p
-        king_y, king_x = king.position
+        king_x, king_y = king.position
         # determine the direction of the check
         up = True if king_y < y2 else False
         down = True if king_y > y2 else False
@@ -236,22 +235,22 @@ class GameBoard(Frame):
             if piece:
                 if piece.color == self.opponent_color() and piece.type == "king":
                     king = piece
-        king_y, king_x = king.position
+        king_x, king_y = king.position
         for i, j in [(1, 1), (1, -1), (-1, 1), (-1, -1),
                      (1, 0), (0, 1), (-1, 0), (0, -1)]:
-            if not ((0 <= king_y+i <= 7) and (0 <= king_x+j <= 7)):
+            if not ((0 <= king_x+i <= 7) and (0 <= king_y+j <= 7)):
                 continue
-            taken = self.coords_pieces[(king_y+i, king_x+j)]
+            taken = self.coords_pieces[(king_x+i, king_y+j)]
             if taken:
                 if taken.color != self.opponent_color():
                     evade = not self.checked(king,
                                              king_x, king_y,
-                                             king_x+j, king_y+i,
+                                             king_x+i, king_y+j,
                                              self.opponent_color())
             else:
                 evade = not self.checked(king,
                                          king_x, king_y,
-                                         king_x + j, king_y + i,
+                                         king_x + i, king_y + j,
                                          self.opponent_color())
             if evade:
                 break
@@ -274,20 +273,20 @@ class GameBoard(Frame):
                     break
         return block
 
-    def pawn_promotion(self, name, row, col):
+    def pawn_promotion(self, name, x, y):
         color = self.current_color()
         self.promote_queen_button = Button(
             image=self.images_dic[color + "_queen"],
-            command=lambda: self.promote(name, "queen", row, col))
+            command=lambda: self.promote(name, "queen", x, y))
         self.promote_knight_button = Button(
             image=self.images_dic[color + "_knight"],
-            command=lambda: self.promote(name, "knight", row, col))
+            command=lambda: self.promote(name, "knight", x, y))
         self.promote_rook_button = Button(
             image=self.images_dic[color + "_rook"],
-            command=lambda: self.promote(name, "rook", row, col))
+            command=lambda: self.promote(name, "rook", x, y))
         self.promote_bishop_button = Button(
             image=self.images_dic[color + "_bishop"],
-            command=lambda: self.promote(name, "bishop", row, col))
+            command=lambda: self.promote(name, "bishop", x, y))
         self.promote_knight_button.grid(row=1, column=1, sticky="ew")
         self.promote_queen_button.grid(row=1, column=2, sticky="ew")
         self.promote_rook_button.grid(row=1, column=3, sticky="ew")
@@ -315,115 +314,36 @@ class GameBoard(Frame):
         self.canvas.tag_raise("piece")
         self.canvas.tag_lower("square")
 
-    def available_moves(self):
-        possible_moves = {}
-        for p in self.pieces_coords:
-            if p: #something weird happening when castling line could be removed
-                if not p.taken and p.color == self.current_color():
-                    moves = p.possible_moves(
-                        coords_pieces=self.coords_pieces,
-                        pieces_coords=self.pieces_coords,
-                        name_piece=self.name_piece,
-                        player=self.player)
-                    if moves:
-                        possible_moves[p] = moves
-        return possible_moves
-
-    def random_move(self):
-        possible_moves = self.available_moves()
-        if possible_moves:
-            piece = random.choice(list(possible_moves.keys()))
-            move = random.choice(possible_moves[piece])
-            # TODO: FIX this for fucks sake
-            move = (move[1], move[0])
-            return piece, move
-
-    def available_attacks(self):
-        possible_moves = self.available_moves()
-        attacking_moves = {}
-        if possible_moves:
-            for piece, moves in possible_moves.items():
-                # TODO: JUST USE x and y and NOT row and col
-                attacks = [i for i in moves if
-                           self.coords_pieces[(i[1], i[0])]]
-                if attacks:
-                    attacking_moves[piece] = attacks
-        return attacking_moves
-
-    def random_attack(self):
-        attacking_moves = self.available_attacks()
-        if attacking_moves:
-            piece = random.choice(list(attacking_moves.keys()))
-            move = random.choice(attacking_moves[piece])
-            # TODO: JUST USE x and y and NOT row and col
-            move = (move[1], move[0])
-            return piece, move
-        return self.random_move()
-
-    def move_player2(self):
-            # piece, move = self.random_move()
-            piece, move = self.random_attack()
-            self.place_piece(piece, move)
-
-
-    def select(self, e):
-        # TODO: fix selecting empty square bug
-        if self.selected:
-            row, col = self.coords_to_row_col(e.x, e.y)
-            self.canvas.delete("selected")
-            valid = self.place_piece(self.selected_piece, (row, col))
-            self.selected_piece = None
-            self.selected = False
-            if valid:
-                self.player = 2 if self.player == 1 else 1
-                self.move_player2()
-                self.player = 2 if self.player == 1 else 1
-                self.turn_label.config(text="Turn: Player " +str(self.player))
-        else:
-            row, col = self.coords_to_row_col(e.x, e.y)
-            x1 = (col * self.size)
-            y1 = (row * self.size)
-            x2 = x1 + self.size
-            y2 = y1 + self.size
-            self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
-                                         fill="red", tags="selected")
-            # self.select_label.config(text="row: "+str(row)+" col: "+str(col))
-            self.canvas.tag_raise("piece")
-            piece = self.coords_pieces[(row, col)]
-            if piece:
-                self.selected = True
-                self.selected_piece = piece
-
     def setup_board(self):
         images = self.images_dic
         white_player = 1 if self.player_1_color == "white" else 2
         black_player = 2 if white_player == 1 else 1
-        for c in range(self.columns):
-            self.add_piece("white", "pawn", white_player, self.images_dic["white_pawn"], 6, c)
-            self.add_piece("black", "pawn", black_player, images["black_pawn"], 1, c)
-            if c == 0 or c == 7:
-                self.add_piece("white", "rook", white_player, images["white_rook"], 7, c)
-                self.add_piece("black", "rook", black_player, images["black_rook"], 0, c)
-            if c == 1 or c == 6:
-                self.add_piece("white", "knight", white_player, images["white_knight"], 7, c)
-                self.add_piece("black", "knight",black_player, images["black_knight"], 0, c)
-            if c == 2 or c == 5:
-                self.add_piece("white", "bishop", white_player, images["white_bishop"], 7, c)
-                self.add_piece("black", "bishop", black_player, images["black_bishop"], 0, c)
-            if c == 3:
-                self.add_piece("white", "queen", white_player, images["white_queen"], 7, c)
-                self.add_piece("black", "queen", black_player, images["black_queen"], 0, c)
-            if c == 4:
-                self.add_piece("white", "king", white_player, images["white_king"], 7, c)
-                self.add_piece("black", "king", black_player, images["black_king"], 0, c)
+        for x in range(self.columns):
+            self.add_piece("white", "pawn", white_player, self.images_dic["white_pawn"], x,6)
+            self.add_piece("black", "pawn", black_player, images["black_pawn"], x,1)
+            if x == 0 or x == 7:
+                self.add_piece("white", "rook", white_player, images["white_rook"], x,7)
+                self.add_piece("black", "rook", black_player, images["black_rook"], x,0)
+            if x == 1 or x == 6:
+                self.add_piece("white", "knight", white_player, images["white_knight"], x,7)
+                self.add_piece("black", "knight",black_player, images["black_knight"], x,0)
+            if x == 2 or x == 5:
+                self.add_piece("white", "bishop", white_player, images["white_bishop"], x,7)
+                self.add_piece("black", "bishop", black_player, images["black_bishop"], x,0)
+            if x == 3:
+                self.add_piece("white", "queen", white_player, images["white_queen"], x,7)
+                self.add_piece("black", "queen", black_player, images["black_queen"], x,0)
+            if x == 4:
+                self.add_piece("white", "king", white_player, images["white_king"], x,7)
+                self.add_piece("black", "king", black_player, images["black_king"], x,0)
 
-        # Kings track rooks to know if they can castle latter
+        # Kings track rooks to know if they can castle later
         white_king = self.name_piece["white_king_4"]
         black_king = self.name_piece["black_king_4"]
         white_king.add_rooks(self.name_piece)
         black_king.add_rooks(self.name_piece)
 
-    def coords_to_row_col(self, x, y):
+    def coords_to_col_row(self, x, y):
         size = self.size
         if y < size:
             row = 0
@@ -458,7 +378,7 @@ class GameBoard(Frame):
             col = 6
         else:
             col = 7
-        return row, col
+        return col, row
 
     def current_color(self):
         return "white" if self.player_1_color == "white" and \
@@ -471,11 +391,11 @@ class GameBoard(Frame):
         # assume no check
         check = False
         # simulate move
-        old_piece = self.coords_pieces[(y2, x2)]
+        old_piece = self.coords_pieces[(x2, y2)]
         self.pieces_coords[old_piece] = None
-        self.pieces_coords[piece] = (y2, x2)
-        self.coords_pieces[(y1, x1)] = None
-        self.coords_pieces[(y2, x2)] = piece
+        self.pieces_coords[piece] = (x2, y2)
+        self.coords_pieces[(x1, y1)] = None
+        self.coords_pieces[(x2, y2)] = piece
         piece.move(x2, y2)
 
         for p in self.pieces_coords:
@@ -484,28 +404,27 @@ class GameBoard(Frame):
                 break
 
         # restore position
-        self.coords_pieces[(y2, x2)] = old_piece
-        self.pieces_coords[old_piece] = (y2, x2)
-        self.coords_pieces[(y1, x1)] = piece
-        self.pieces_coords[piece] = (y1, x1)
+        self.coords_pieces[(x2, y2)] = old_piece
+        self.pieces_coords[old_piece] = (x2, y2)
+        self.coords_pieces[(x1, y1)] = piece
+        self.pieces_coords[piece] = (x1, y1)
         piece.move(x1, y1)
 
         return check
 
-    def promote(self, piece, new_type, row, col):
+    def promote(self, piece, new_type, x, y):
         self.canvas.coords(piece.name, -self.size, -self.size)
-
-        color = piece.color
+        piece.taken = True
         player = 2 if self.player == 1 else 1
-        new_piece = self.create_piece(color, new_type, (row, col), player)
+        new_piece = self.create_piece(piece.color, new_type, (x, y), player)
         self.canvas.create_image(0, 0,
-                                 image=self.images_dic[color+"_"+new_type],
+                                 image=self.images_dic[piece.color+"_"+new_type],
                                  tags=(new_piece.name, "piece"),
                                  anchor="c")
-        self.pieces_coords[new_piece] = (row, col)
-        self.coords_pieces[(row, col)] = new_piece
-        x0 = (col * self.size) + int(self.size / 2)
-        y0 = (row * self.size) + int(self.size / 2)
+        self.pieces_coords[new_piece] = (x, y)
+        self.coords_pieces[(x, y)] = new_piece
+        x0 = (x * self.size) + int(self.size / 2)
+        y0 = (y * self.size) + int(self.size / 2)
         self.canvas.coords(new_piece.name, x0, y0)
         self.promote_queen_button.destroy()
         self.promote_knight_button.destroy()
