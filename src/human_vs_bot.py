@@ -75,9 +75,12 @@ class HumanBot(gui.GameBoard):
         attacking_moves = {}
         if possible_moves:
             for piece, moves in possible_moves.items():
-                # TODO: JUST USE x and y and NOT row and col
-                attacks = [move for move in moves if
-                           self.coords_pieces[move]]
+                attacks = []
+                for move in moves:
+                    if self.coords_pieces[move]:
+                        attacks.append(move)
+                    elif self.check_en_passant(piece, move[0], move[1]):
+                        attacks.append(move)
                 if attacks:
                     attacking_moves[piece] = attacks
         return attacking_moves

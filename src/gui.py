@@ -119,12 +119,13 @@ class GameBoard(Frame):
                 self.pieces_coords[dead_piece] = None
 
             # en passant
-            if piece.type =="pawn" and self.name_piece["en_passant"]:
-                to_take = self.name_piece["en_passant"]
-                x3, y3 = to_take.position
-                if x3 == x2 and y3 == y1:
+            if self.check_en_passant(piece, x2, y2):
+                    to_take = self.name_piece["en_passant"]
                     self.canvas.coords(to_take.name, -self.size, -self.size)
                     self.pieces_coords[to_take] = None
+                    # Only case where the square of the taken piece is empty
+                    self.coords_pieces[to_take.position] = None
+                    to_take.dead = True
 
             # en passant possible next move
             if piece.type == "pawn" and abs(y1-y2) == 2:
@@ -168,6 +169,16 @@ class GameBoard(Frame):
                 self.check_label.config(text="no checks")
 
         return valid
+
+    def check_en_passant(self, piece, x2, y2):
+        if not (self.name_piece["en_passant"] and piece.type == "pawn"):
+            return False
+        else:
+            x1, y1 = piece.position
+            to_take = self.name_piece["en_passant"]
+            x3, y3 = to_take.position
+            if x3 == x2 and y3 == y1:
+                return True
 
     def promotion(self, piece, x, y):
         self.pawn_promotion(piece, x, y)
