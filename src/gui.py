@@ -38,7 +38,8 @@ class GameBoard(Frame):
         self.images_dic = Images.load_images()
         self.check_label = Label(text="No checks", width=20)
         self.check_label.grid(row=2, column=1, pady=1)
-
+        self.eval = Label(text="Evaluation: 0", width=20)
+        self.eval.grid(row=2, column=2, pady=1)
         self.turn_label = Label(text="Turn: Player 1", width=20)
         self.turn_label.grid(row=2, column=3, pady=1)
         canvas_width = columns * size
@@ -167,6 +168,7 @@ class GameBoard(Frame):
                     self.check_label.config(text="CHECK!")
             else:
                 self.check_label.config(text="no checks")
+            self.eval.config(text="Evaluation: "+str(self.board_eval(1)))
 
         return valid
 
@@ -441,6 +443,16 @@ class GameBoard(Frame):
         self.promote_knight_button.destroy()
         self.promote_bishop_button.destroy()
         self.promote_rook_button.destroy()
+
+    def board_eval(self, player):
+        score = 0
+        for piece, coords in self.pieces_coords.items():
+            if coords:
+                if piece.player == player:
+                    score += piece.value
+                else:
+                    score -= piece.value
+        return score
 
 
 if __name__ == "__main__":

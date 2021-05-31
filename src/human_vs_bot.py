@@ -95,8 +95,56 @@ class HumanBot(gui.GameBoard):
 
     def move_player2(self):
             # piece, move = self.random_move()
-            piece, move = self.random_attack()
+            # piece, move = self.random_attack()
+            piece, move = self.one_step_lookahead()
             self.place_piece(piece, move)
+
+    def board_eval(self, player):
+        score = 0
+        for piece, coords in self.pieces_coords.items():
+            if piece and coords:
+                if piece.player == player:
+                    score += piece.value
+                else:
+                    score -= piece.value
+        return score
+
+    def one_step_lookahead(self):
+        valid_moves = self.available_moves()
+        scores = {}
+        for piece, moves in valid_moves.items():
+            for move in moves:
+                scores[(piece, move)] = self.score_move(piece, move)
+
+        # Get a list of columns (moves) that maximize the heuristic
+        max_moves = [piece_move for piece_move in scores.keys() if
+                    scores[piece_move] == max(scores.values())]
+        piece, move = random.choice(max_moves)
+        return piece, move
+
+    def score_move(self, piece, move):
+        x1, y1 = piece.position
+        x2, y2 = move
+
+        # simulate move
+        old_piece = self.coords_pieces[(x2, y2)]
+        self.pieces_coords[old_piece] = None
+        self.pieces_coords[piece] = (x2, y2)
+        self.coords_pieces[(x1, y1)] = None
+        self.coords_pieces[(x2, y2)] = piece
+        piece.move(x2, y2)
+
+        eval = self.board_eval(2)
+
+        # restore position
+        self.coords_pieces[(x2, y2)] = old_piece
+        self.pieces_coords[old_piece] = (x2, y2)
+        self.coords_pieces[(x1, y1)] = piece
+        self.pieces_coords[piece] = (x1, y1)
+        piece.move(x1, y1)
+        return eval
+
+
 
     def select(self, e):
         # TODO: fix selecting empty square bug
