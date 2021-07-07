@@ -2,7 +2,9 @@ from tkinter import *
 from utilities.images_dict import Images
 from collections import defaultdict
 from src.Pieces import *
-import random
+
+from src.board_functions import *
+
 
 # DONE: castling
 # DONE: fix all that broke after great refactor
@@ -49,6 +51,9 @@ class GameBoard(Frame):
         self.player = 1
         self.player_1_color = "white"
         self.check = False
+
+        self.game_over = False
+        self.move_count = 1
 
 
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0,
@@ -120,7 +125,8 @@ class GameBoard(Frame):
                 self.pieces_coords[dead_piece] = None
 
             # en passant
-            if self.check_en_passant(piece, x2, y2):
+
+            if check_en_passant(self.name_piece, piece, x2, y2):
                     to_take = self.name_piece["en_passant"]
                     self.canvas.coords(to_take.name, -self.size, -self.size)
                     self.pieces_coords[to_take] = None
@@ -151,9 +157,10 @@ class GameBoard(Frame):
                 rook_x = 7 if x1 < x2 else 0
                 rook = self.get_piece(piece.color+"_rook_"+str(rook_x))
                 new_rook_x = 5 if rook_x == 7 else 3
-                rook_y = rook.position[0]
-                self.pieces_coords[rook] = (rook_y, new_rook_x)
-                self.coords_pieces[(rook_y, new_rook_x)] = rook
+
+                rook_y = rook.position[1]
+                self.pieces_coords[rook] = (new_rook_x, rook_y)
+                self.coords_pieces[(new_rook_x, rook_y)] = rook
                 rook.move(new_rook_x, rook_y)
                 x0 = (new_rook_x * self.size) + int(self.size/2)
                 y0 = (rook_y * self.size) + int(self.size/2)
@@ -163,24 +170,29 @@ class GameBoard(Frame):
             if self.king_checked(self.opponent_color()):
                 if not self.protect_possible(piece, x2, y2):
                     self.check_label.config(text="CHECKMATE!")
+                    self.game_over = True
                 else:
                     self.check = True
                     self.check_label.config(text="CHECK!")
             else:
                 self.check_label.config(text="no checks")
-            self.eval.config(text="Evaluation: "+str(self.board_eval(1)))
+
+            evaluation = self.board_eval(1, self.pieces_coords)
+            self.eval.config(text="Evaluation: "+str(evaluation))
 
         return valid
 
-    def check_en_passant(self, piece, x2, y2):
-        if not (self.name_piece["en_passant"] and piece.type == "pawn"):
-            return False
-        else:
-            x1, y1 = piece.position
-            to_take = self.name_piece["en_passant"]
-            x3, y3 = to_take.position
-            if x3 == x2 and y3 == y1:
-                return True
+    # @staticmethod
+    # def check_en_passant(name_piece, piece, x2, y2):
+    #     if not (name_piece["en_passant"] and piece.type == "pawn"):
+    #         return False
+    #     else:
+    #         x1, y1 = piece.position
+    #         to_take = name_piece["en_passant"]
+    #         x3, y3 = to_take.position
+    #         if x3 == x2 and y3 == y1:
+    #             return True
+    #         return False
 
     def promotion(self, piece, x, y):
         self.pawn_promotion(piece, x, y)
@@ -347,8 +359,8 @@ class GameBoard(Frame):
                 self.add_piece("white", "queen", white_player, images["white_queen"], x,7)
                 self.add_piece("black", "queen", black_player, images["black_queen"], x,0)
             if x == 4:
-                self.add_piece("white", "king", white_player, images["white_king"], x,7)
-                self.add_piece("black", "king", black_player, images["black_king"], x,0)
+                self.add_piece("white", "king", white_player, images["white_king"], x, 7)
+                self.add_piece("black", "king", black_player, images["black_king"], x, 0)
 
         # Kings track rooks to know if they can castle later
         white_king = self.name_piece["white_king_4"]
@@ -444,10 +456,11 @@ class GameBoard(Frame):
         self.promote_bishop_button.destroy()
         self.promote_rook_button.destroy()
 
-    def board_eval(self, player):
+
+    def board_eval(self, player, pieces_coords):
         score = 0
-        for piece, coords in self.pieces_coords.items():
-            if coords:
+        for piece, coords in pieces_coords.items():
+            if piece and coords:
                 if piece.player == player:
                     score += piece.value
                 else:
