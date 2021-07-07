@@ -56,8 +56,8 @@ class Piece:
         if self.type == "king":
             check = self.checked(coords_pieces)
         else:
-            for piece in pieces_coords:
-                if piece:
+            for piece, coords in pieces_coords.items():
+                if piece and coords:
                     if piece.color == self.color and piece.type == "king":
                         check = piece.checked(coords_pieces)
                         break
@@ -269,8 +269,8 @@ class Queen(Piece):
         self.value = 9
 
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
-        rook = Rook(self.color, self.position, player)
-        bishop = Bishop(self.color, self.position, player)
+        rook = Rook(self.color, self.position, self.player)
+        bishop = Bishop(self.color, self.position, self.player)
         moves = []
 
         moves.extend(bishop.possible_moves(coords_pieces, pieces_coords, player, name_piece))
@@ -278,8 +278,8 @@ class Queen(Piece):
         return moves
 
     def valid_move(self, x2, y2, coords_pieces, pieces_coords, player, name_piece):
-        rook = Rook(self.color, self.position, player)
-        bishop = Bishop(self.color, self.position, player)
+        rook = Rook(self.color, self.position, self.player)
+        bishop = Bishop(self.color, self.position, self.player)
 
         return rook.valid_move(x2, y2, coords_pieces, pieces_coords, player, name_piece) or \
             bishop.valid_move(x2, y2, coords_pieces, pieces_coords, player, name_piece)
@@ -304,7 +304,7 @@ class King(Piece):
         x1, y1 = self.position
         moves = []
         options = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1),
-                   (0, -1), (-1, -1)]
+                   (0, -1), (-1, -1), (-2, 0), (2, 0)]
         for x, y in options:
             if self.valid_move(x1+x, y1+y, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+x, y1+y))
@@ -326,7 +326,7 @@ class King(Piece):
 
         diff = x2-x1
         if (abs(diff) == 2
-                and not coords_pieces[(x1, y1 + int((diff / 2)))]
+                and not coords_pieces[(x1+int(diff / 2), y1)]
                 and not coords_pieces[(x2, y2)]
                 and not self.moved
                 and not self.rooks[x1 < x2].moved)\
@@ -349,7 +349,7 @@ class King(Piece):
                         ((piece.type in {"bishop", "queen"}) or
                          (piece.type == "pawn" and i == 1 and self.player == 1)
                          or (piece.type == "king" and i == 1)):
-                    check = True
+                    return True
                 break
             i += 1
         # up and left
@@ -361,7 +361,8 @@ class King(Piece):
                         ((piece.type in {"bishop", "queen"}) or
                          (piece.type == "pawn" and i == 1 and self.player == 1)
                          or (piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # down and right
@@ -373,7 +374,8 @@ class King(Piece):
                         ((piece.type in {"bishop", "queen"}) or
                          (piece.type == "pawn" and i == 1 and self.player == 2)
                          or (piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # down and left
@@ -385,7 +387,8 @@ class King(Piece):
                         ((piece.type in {"bishop", "queen"}) or
                          (piece.type == "pawn" and i == 1 and self.player == 2)
                          or (piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # check straight lines for rooks or queens
@@ -397,7 +400,8 @@ class King(Piece):
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
                          piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # down
@@ -408,7 +412,8 @@ class King(Piece):
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
                          piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # right
@@ -419,7 +424,8 @@ class King(Piece):
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
                          piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # left
@@ -430,7 +436,8 @@ class King(Piece):
                 if piece.color != self.color and \
                         ((piece.type in {"rook", "queen"} or
                          piece.type == "king" and i == 1)):
-                    check = True
+
+                    return True
                 break
             i += 1
         # check knight checks
@@ -441,6 +448,5 @@ class King(Piece):
             piece = coords_pieces[(x+j, y-i)]
             if piece:
                 if piece.type == "knight" and piece.color != self.color:
-                    check = True
-                    break
-        return check
+                    return True
+
