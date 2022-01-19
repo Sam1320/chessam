@@ -37,15 +37,18 @@ import os
 
 
 class HumanBot(gui.GameBoard):
-    def __init__(self, parent):
+    def __init__(self, parent, bot='n_step', steps=1):
         super(HumanBot, self).__init__(parent)
-        stockfish_path = os.path.join(
-            os.path.dirname(__file__), '..',
-            r"stockfish_13_win_x64_bmi2\stockfish_13_win_x64_bmi2.exe")
+
+        stockfish_exec = 'stockfish_14.1_linux_x64' if os.name == 'posix' else 'stockfish_13_win_x64_bmi2.exe'
+        stockfish_path = os.path.join(os.path.dirname(__file__), '..', stockfish_exec)
 
         self.type = "human_vs_bot"
-        self.engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
-        self.limit = chess.engine.Limit(time=.5)
+
+        self.bot = bot
+        if self.bot == 'stockfish':
+            self.engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
+            self.limit = chess.engine.Limit(time=.5)
 
     def promotion(self, piece, x, y):
         if self.player == 1:
@@ -68,29 +71,30 @@ class HumanBot(gui.GameBoard):
         y0 = (y * self.size) + int(self.size / 2)
         self.canvas.coords(new_piece.name, x0, y0)
 
-
     def move_player2(self):
-            node = {"pieces_coords": self.pieces_coords,
-                    "coords_pieces": self.coords_pieces,
-                    "name_piece": self.name_piece,
-                    "player": self.player,
-                    "turn": self.player,
-                    "game_over": self.game_over,
-                    "current_color": self.current_color(),
-                    "move_count": self.move_count}
-            # piece, move = random_move(node)
-            # piece, move = random_attack(node)
+        node = {"pieces_coords": self.pieces_coords,
+                "coords_pieces": self.coords_pieces,
+                "name_piece": self.name_piece,
+                "player": self.player,
+                "turn": self.player,
+                "game_over": self.game_over,
+                "current_color": self.current_color(),
+                "move_count": self.move_count}
+
+        if self.bot == 'stockfish':
             fen = board_to_FEN(node)
             board = chess.Board(fen)
-
             result = self.engine.play(board, self.limit)
-            # print(result.move)
-
-            piece_location, piece_move = move_to_piece_move(str(result.move))
+            piece_location, move = move_to_piece_move(str(result.move))
             piece = self.coords_pieces[piece_location]
 
-            # piece, move = n_step_lookahead(node, 2)
-            self.place_piece(piece, piece_move)
+        elif self.bot == 'random':
+            piece, move = random_move(node)
+        elif self.bot == 'random_attack':
+            piece, move = random_attack(node)
+        else:
+            piece, move = n_step_lookahead(node, 2)
+        self.place_piece(piece, move)
 
     def select(self, e):
         if self.selected:
@@ -134,9 +138,10 @@ class HumanBot(gui.GameBoard):
                                          fill="red", tags="selected")
             self.canvas.tag_raise("piece")
 
+
 if __name__ == "__main__":
     root = Tk()
-    board = HumanBot(root)
+    board = HumanBot(root, bot='stockfish')
     board.grid(row=0, columnspan=6, padx=4, pady=4)
     board.setup_board()
     # Avoid window resizing
