@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+
 class Piece:
     def __init__(self, color, position, player):
         self.position = position
@@ -56,6 +57,7 @@ class Piece:
         if self.type == "king":
             check = self.checked(coords_pieces)
         else:
+            # todo: make more efficient (e.g by querying the location of the king directly from dictionary)
             for piece, coords in pieces_coords.items():
                 if piece and coords:
                     if piece.color == self.color and piece.type == "king":
@@ -130,8 +132,6 @@ class Pawn(Piece):
         return False
 
 
-
-
 class Rook(Piece):
     def __init__(self, color, position, player):
         super().__init__(color, position, player)
@@ -142,6 +142,7 @@ class Rook(Piece):
     def possible_moves(self, coords_pieces, pieces_coords, player, name_piece):
         x1, y1 = self.position
         moves = []
+        # todo optimize
         for i in range(1, 8):
             if self.valid_move(x1+i, y1, coords_pieces, pieces_coords, player, name_piece):
                 moves.append((x1+i, y1))

@@ -44,8 +44,8 @@ class HumanBot(gui.GameBoard):
         stockfish_path = os.path.join(os.path.dirname(__file__), '..', stockfish_exec)
 
         self.type = "human_vs_bot"
-
         self.bot = bot
+        self.steps = steps
         if self.bot == 'stockfish':
             self.engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
             self.limit = chess.engine.Limit(time=.5)
@@ -93,7 +93,7 @@ class HumanBot(gui.GameBoard):
         elif self.bot == 'random_attack':
             piece, move = random_attack(node)
         else:
-            piece, move = n_step_lookahead(node, 2)
+            piece, move = n_step_lookahead(node, self.steps)
         self.place_piece(piece, move)
 
     def select(self, e):
@@ -141,7 +141,7 @@ class HumanBot(gui.GameBoard):
 
 if __name__ == "__main__":
     root = Tk()
-    board = HumanBot(root, bot='stockfish')
+    board = HumanBot(root, bot='stockfish', steps=2)
     board.grid(row=0, columnspan=6, padx=4, pady=4)
     board.setup_board()
     # Avoid window resizing

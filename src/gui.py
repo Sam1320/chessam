@@ -8,11 +8,11 @@ from src.board_functions import *
 
 # DONE: castling
 # DONE: fix all that broke after great refactor
+# DONE: stalemate
+# DONE: en passant
 # TODO: automate bot piece promotion selection
 # TODO: add castling and en passant as possible moves
 # TODO: verify double check
-# TODO: stalemate
-# TODO: en passant
 # TODO: add scores
 # TODO: add clocks
 # TODO: reset button
@@ -22,6 +22,51 @@ from src.board_functions import *
 
 
 class GameBoard(Frame):
+    """A class used to store the game state information and display the board.
+
+    Attributes
+    ------
+    rows: int
+        number of rows on the board.
+    columns: int
+        number of columns on the board.
+    size: int
+        number of squares on the board.
+    color1: str
+        color of what should be the white squares.
+    color2: str
+        color of what should be the black squares.
+    pieces_coords: dict
+        dictionary that maps piece objects to coordinates on the board.
+    coords_pieces: dict
+        dictionary that maps board coordinates to piece objects or to None if the square is free.
+    name_piece: dict
+        dictionary that maps piece names to piece objects.
+    images_dic: dict
+        dictionary that maps piece types to images representing that piece type.
+    check_label: Label
+        label indicating if a check is currently present on the board.
+    eval: Label
+        label indicating the current evaluation of the board.
+    turn_label: Label
+        label indicating the current turn.
+    selected: bool
+        flag indicating if there is a selected square on the board.
+    selected_piece: {Piece, None}
+        stores the current selected piece or None if no piece is selected.
+    player: int
+        stores the int representing the player whose turn it is.
+    player_1_color: str
+        color of the player 1.
+    check: bool
+        flag indicating if a check is currently present on the board.
+    game_over: bool
+        flag indicating if the game is over.
+    move_count: int
+        number of moves since the start of the game.
+    canvas: Canvas
+        canvas where the board is drawn and pieces displayed.
+        """
     def __init__(self, parent, rows=8, columns=8, size=64, color1="white",
                  color2="gray"):
 
@@ -32,7 +77,6 @@ class GameBoard(Frame):
         self.size = size
         self.color1 = color1
         self.color2 = color2
-        self.type = "default"
         # Game attributes
         self.pieces_coords = defaultdict(lambda: None)
         self.coords_pieces = defaultdict(lambda: None)
@@ -182,17 +226,6 @@ class GameBoard(Frame):
 
         return valid
 
-    # @staticmethod
-    # def check_en_passant(name_piece, piece, x2, y2):
-    #     if not (name_piece["en_passant"] and piece.type == "pawn"):
-    #         return False
-    #     else:
-    #         x1, y1 = piece.position
-    #         to_take = name_piece["en_passant"]
-    #         x3, y3 = to_take.position
-    #         if x3 == x2 and y3 == y1:
-    #             return True
-    #         return False
 
     def promotion(self, piece, x, y):
         self.pawn_promotion(piece, x, y)

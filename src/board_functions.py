@@ -4,6 +4,7 @@ import numpy as np
 
 
 def check_en_passant(name_piece, piece, x2, y2):
+    """ verifies if moving piece to x2, y2 is a valid en passant move."""
     if not (name_piece["en_passant"] and piece.type == "pawn"):
         return False
     else:
@@ -16,6 +17,7 @@ def check_en_passant(name_piece, piece, x2, y2):
 
 
 def do_move(node, piece_move):
+    """takes a board state 'node' executes the move in 'piece_move' and returns the updated board state."""
     next_node = deepcopy(node)
     pieces_coords = next_node["pieces_coords"]
     coords_pieces = next_node["coords_pieces"]
@@ -39,18 +41,18 @@ def do_move(node, piece_move):
     coords_pieces[(x1, y1)] = None
     coords_pieces[(x2, y2)] = piece
     piece.move(x2, y2)
-
-    # handle checkmate case
     return next_node
 
 
 def is_terminal_node(node):
+    """checks if there are no more possible moves in node."""
     game_over = node["game_over"]
     if game_over:
         return True
 
 
 def available_moves(node):
+    """returns all available moves of current player."""
     pieces_coords = node["pieces_coords"]
     current_color = node["current_color"]
     coords_pieces = node["coords_pieces"]
@@ -72,6 +74,7 @@ def available_moves(node):
 
 
 def random_move(node):
+    """returns a random piece an move given a board state 'node'."""
     possible_moves = available_moves(node)
     if possible_moves:
         piece = random.choice(list(possible_moves.keys()))
@@ -80,6 +83,7 @@ def random_move(node):
 
 
 def available_attacks(node):
+    """returns all available attacks of current player or random piece and move in case no attacks are found."""
     coords_pieces = node["coords_pieces"]
     name_piece = node["name_piece"]
 
@@ -95,30 +99,38 @@ def available_attacks(node):
                     attacks.append(move)
             if attacks:
                 attacking_moves[piece] = attacks
-    return attacking_moves
+    if not attacking_moves:
+        piece = random.choice(list(possible_moves.keys()))
+        move = random.choice(possible_moves[piece])
+        return None, piece, move
+    else:
+        return attacking_moves, None, None
 
 
 def random_attack(node):
-    attacking_moves = available_attacks(node)
+    """returns a random piece and attacking move given a board state 'node'."""
+    attacking_moves, piece, move = available_attacks(node)
     if attacking_moves:
         piece = random.choice(list(attacking_moves.keys()))
         move = random.choice(attacking_moves[piece])
         return piece, move
-    return random_move(node)
+    return piece, move
 
 
 def score_move(node, piece_move, nsteps):
+    """returns the board assessment after executing 'piece_move' and anticipating 'nsteps' steps in th future."""
     next_node = do_move(node, piece_move)
-    eval = minimax(next_node, nsteps-1, False, alpha=-np.inf, beta=np.inf)
+    eval = minimax(next_node, nsteps, False, alpha=-np.inf, beta=np.inf)
     return eval
 
 
 def n_step_lookahead(node, nsteps):
+    """returns the move with the highest score after looking 'nsteps' steps in the future."""
     valid_moves = available_moves(node)
     scores = {}
     for piece, moves in valid_moves.items():
         for move in moves:
-            score = score_move(node, (piece, move), nsteps)
+            score = score_move(node, (piece, move), nsteps-1)
             scores[(piece, move)] = score
     # Get a list of columns (moves) that maximize the heuristic
     max_score = max(scores.values())
@@ -131,6 +143,7 @@ def n_step_lookahead(node, nsteps):
 
 
 def board_eval(node, player):
+    """returns simple static board evaluation score."""
     pieces_coords = node["pieces_coords"]
     score = 0
     for piece, coords in pieces_coords.items():
@@ -172,6 +185,7 @@ def minimax(node, depth, maximizing_player, alpha, beta):
 
 
 def board_to_FEN(board):
+    """Converts board to FEN notation."""
     coords_pieces = board["coords_pieces"]
     color = board["current_color"]
     name_piece = board["name_piece"]
@@ -242,6 +256,7 @@ def board_to_FEN(board):
 
 
 def move_to_piece_move(move):
+    """Converts move in FEN notation to piece and move pair."""
     file_to_x = {key: value for key, value in zip("abcdefgh", range(8))}
     file1, rank1, file2, rank2 = move
 
@@ -254,6 +269,7 @@ def move_to_piece_move(move):
 
 
 def xy_to_square(x, y):
+    """Converts xy grid coordinates to square coordinates in chess notation."""
     x_to_file = {key: value for key, value in zip(range(8), "abcdefgh")}
     y = 7-y
     return x_to_file[x]+str(y)
