@@ -114,6 +114,7 @@ class GameBoard(Frame):
 
     @staticmethod
     def create_piece(color, piece_type, position, player):
+        """creates piece objects based on color type position and player id."""
         if piece_type == "pawn":
             piece = Pawn(color, position, player)
         elif piece_type == "rook":
@@ -132,7 +133,7 @@ class GameBoard(Frame):
         return piece
 
     def add_piece(self, color, piece_type, player,  image, x, y):
-        # Add a piece to the playing board'''
+        """creates and draws piece on the board"""
         piece = self.create_piece(color, piece_type, (x, y), player)
         self.canvas.create_image(0, 0, image=image, tags=(piece.name, "piece"),
                                  anchor="c")
@@ -146,18 +147,19 @@ class GameBoard(Frame):
         self.canvas.coords(piece.name, x0, y0)
 
     def get_piece(self, name):
+        """retrieves piece object from the piece name."""
         for p in self.pieces_coords:
             if p.name == name:
                 return p
 
     def place_piece(self, piece, position):
-
+        """If the move is valid the piece is placed at the given position and the game state updated. If the move is not
+        valid, then 'False' is returned and the game state stays unchanged."""
         x1, y1 = piece.position
         x2, y2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
                                  self.pieces_coords, self.player, self.name_piece)
         if valid:
-
             self.coords_pieces[(x1, y1)] = None
             # if target square is occupied then delete the taken piece
             if self.coords_pieces[(x2, y2)]:
@@ -169,7 +171,6 @@ class GameBoard(Frame):
                 self.pieces_coords[dead_piece] = None
 
             # en passant
-
             if check_en_passant(self.name_piece, piece, x2, y2):
                     to_take = self.name_piece["en_passant"]
                     self.canvas.coords(to_take.name, -self.size, -self.size)
@@ -226,11 +227,11 @@ class GameBoard(Frame):
 
         return valid
 
-
     def promotion(self, piece, x, y):
         self.pawn_promotion(piece, x, y)
 
     def king_checked(self, color):
+        """verifies is the king of the given color is in check."""
         check = False
         for p in self.pieces_coords:
             if p:
@@ -240,11 +241,13 @@ class GameBoard(Frame):
         return check
 
     def protect_possible(self, piece, x2, y2):
+        """Verifies if it is possible to protect the king against a check coming from piece at position x2, y2."""
         return self.block_possible(piece, x2, y2) or \
                self.evade_possible() or \
                self.take_possible(x2, y2)
 
     def block_possible(self, piece, x2, y2):
+        """Verifies if it is possible to place a piece between the king and the attacking piece."""
         king = None
         for p in self.pieces_coords:
             if p:
@@ -263,6 +266,7 @@ class GameBoard(Frame):
         if distance == 1 or piece.type == "knight":
             block = False
         else:
+            # For every square in the line of attack check if a piece can be placed there
             for i in range(1, distance):
                 if up and not (left or right):
                     x, y = x2, y2-i
@@ -287,6 +291,7 @@ class GameBoard(Frame):
         return block
 
     def evade_possible(self):
+        """verifies if the king can move out of the check."""
         evade = False
         king = None
         for piece in self.pieces_coords:
@@ -315,10 +320,12 @@ class GameBoard(Frame):
         return evade
 
     def take_possible(self, x2, y2):
+        """verifies if the piece can be taken by the king."""
         take = self.move_possible(x2, y2, self.opponent_color())
         return take
 
     def move_possible(self, x, y, color):
+        """verifies if any piece of the given color can be placed at position x, y."""
         block = False
         player = 1 if self.player_1_color == color else 2
         for piece, coords in self.pieces_coords.items():
@@ -332,6 +339,7 @@ class GameBoard(Frame):
         return block
 
     def pawn_promotion(self, name, x, y):
+        """Displays options for pawn promotion"""
         color = self.current_color()
         self.promote_queen_button = Button(
             image=self.images_dic[color + "_queen"],
@@ -373,6 +381,7 @@ class GameBoard(Frame):
         self.canvas.tag_lower("square")
 
     def setup_board(self):
+        """Sets up the board placing every piece in the corresponding square."""
         images = self.images_dic
         white_player = 1 if self.player_1_color == "white" else 2
         black_player = 2 if white_player == 1 else 1
@@ -402,6 +411,7 @@ class GameBoard(Frame):
         black_king.add_rooks(self.name_piece)
 
     def coords_to_col_row(self, x, y):
+        """Converts x y coordinates to col and row numbers."""
         size = self.size
         if y < size:
             row = 0
@@ -446,6 +456,7 @@ class GameBoard(Frame):
         return "black" if self.current_color() == "white" else "white"
 
     def checked(self, piece, x1, y1, x2, y2, color):
+        """Check if by moving piece to position x2, y2 the king of the given color is checked."""
         # assume no check
         check = False
         # simulate move
@@ -471,6 +482,7 @@ class GameBoard(Frame):
         return check
 
     def promote(self, piece, new_type, x, y):
+        """promotes the pawn 'piece' to the piece 'new_type' and updates the board."""
         self.canvas.coords(piece.name, -self.size, -self.size)
         piece.taken = True
         player = 2 if self.player == 1 else 1
@@ -489,8 +501,8 @@ class GameBoard(Frame):
         self.promote_bishop_button.destroy()
         self.promote_rook_button.destroy()
 
-
     def board_eval(self, player, pieces_coords):
+        """Static board evaluation."""
         score = 0
         for piece, coords in pieces_coords.items():
             if piece and coords:
