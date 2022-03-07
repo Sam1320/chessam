@@ -4,6 +4,8 @@ from tkinter import *
 
 class HumanHuman(gui.GameBoard):
     def select(self, e):
+        """This function gets called when the user clicks on the board. It highlights the selected square and also all
+        the valid squares where the selected piece can be placed."""
         # TODO: fix selecting empty square bug
         if self.selected:
             x, y = self.coords_to_col_row(e.x, e.y)
