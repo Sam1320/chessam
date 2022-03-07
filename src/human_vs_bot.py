@@ -37,13 +37,21 @@ import os
 
 
 class HumanBot(gui.GameBoard):
+    """Class used to store the game state information and display the board.
+
+    Attributes
+    ------
+    bot: str
+        type of bot to play against. {n_step, random, random_attack, stockfish}
+    steps: int
+        number of steps to look ahead. (depth of the minimax tree search)
+    """
     def __init__(self, parent, bot='n_step', steps=1):
         super(HumanBot, self).__init__(parent)
 
         stockfish_exec = 'stockfish_14.1_linux_x64' if os.name == 'posix' else 'stockfish_13_win_x64_bmi2.exe'
         stockfish_path = os.path.join(os.path.dirname(__file__), '..', stockfish_exec)
 
-        self.type = "human_vs_bot"
         self.bot = bot
         self.steps = steps
         if self.bot == 'stockfish':
@@ -51,12 +59,15 @@ class HumanBot(gui.GameBoard):
             self.limit = chess.engine.Limit(time=.5)
 
     def promotion(self, piece, x, y):
+        """Triggers different pawn promotion methods depending if the player is human or bot."""
         if self.player == 1:
             self.pawn_promotion(piece, x, y)
         else:
+            # in the current version the bot always promotes to a queen
             self.promote_bot(piece, "queen", x, y)
 
     def promote_bot(self, piece, new_type, x, y):
+        """Automatic bot promotion and game state update."""
         self.canvas.coords(piece.name, -self.size, -self.size)
         piece.taken = True
         player = 2 if self.player == 1 else 1
@@ -72,6 +83,9 @@ class HumanBot(gui.GameBoard):
         self.canvas.coords(new_piece.name, x0, y0)
 
     def move_player2(self):
+        """Plays a move based on the bot selected and current board state."""
+
+        # store board state in denser representation to search the game tree
         node = {"pieces_coords": self.pieces_coords,
                 "coords_pieces": self.coords_pieces,
                 "name_piece": self.name_piece,
@@ -97,6 +111,9 @@ class HumanBot(gui.GameBoard):
         self.place_piece(piece, move)
 
     def select(self, e):
+        """This function gets called when the user clicks on the board. It highlights the selected square and also all
+        the valid squares where the selected piece can be placed. After the user places the piece the bot is activated
+        and the response move is played."""
         if self.selected:
             x, y = self.coords_to_col_row(e.x, e.y)
             self.canvas.delete("selected")
@@ -106,6 +123,7 @@ class HumanBot(gui.GameBoard):
             if valid and not self.game_over:
                 self.player = 2 if self.player == 1 else 1
                 start = time.perf_counter()
+                # play bot move
                 self.move_player2()
                 self.move_count += 1
                 elapsed = time.perf_counter() - start
@@ -129,6 +147,7 @@ class HumanBot(gui.GameBoard):
                 self.mark_possible_moves(pos_moves)
 
     def mark_possible_moves(self, moves):
+        """Draws a rectangle on the coordinates specified in the 'moves' list."""
         for x, y in moves:
             x1 = x * self.size
             y1 = y * self.size
@@ -141,7 +160,7 @@ class HumanBot(gui.GameBoard):
 
 if __name__ == "__main__":
     root = Tk()
-    board = HumanBot(root, bot='stockfish', steps=2)
+    board = HumanBot(root, bot='random_attack', steps=2)
     board.grid(row=0, columnspan=6, padx=4, pady=4)
     board.setup_board()
     # Avoid window resizing

@@ -22,7 +22,7 @@ from src.board_functions import *
 
 
 class GameBoard(Frame):
-    """A class used to store the game state information and display the board.
+    """Class used to store the game state information and display the board.
 
     Attributes
     ------
@@ -153,8 +153,8 @@ class GameBoard(Frame):
                 return p
 
     def place_piece(self, piece, position):
-        """If the move is valid the piece is placed at the given position and the game state updated. If the move is not
-        valid, then 'False' is returned and the game state stays unchanged."""
+        """If the move is valid the piece is placed at the given position and the game state updated. Otherwise 'False'
+        is returned and the game state stays unchanged."""
         x1, y1 = piece.position
         x2, y2 = position
         valid = piece.valid_move(x2, y2, self.coords_pieces,
