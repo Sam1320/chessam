@@ -15,5 +15,5 @@ This version allows the user to play against different chess bots.
     Asses the possible moves N steps in the future and plays the best move assuming optimal play and using a simple board evaluation heuristic.
 
 ## Documentation
-This project in the context of the Simulation and Modelling module of the Bachelor of Informatics and Computational Sciene at the Univerisity of Potsdam.
+This project was done in the context of the Simulation and Modelling module of the Bachelor of Informatics and Computational Sciene at the Univerisity of Potsdam.
 The ***project_report.pdf*** file contains a complete summary of the main aspects of the project together with a short discussion of the final result and possible next steps.
