@@ -160,7 +160,7 @@ class HumanBot(gui.GameBoard):
 
 if __name__ == "__main__":
     root = Tk()
-    board = HumanBot(root, bot='random_attack', steps=2)
+    board = HumanBot(root, bot='stockfish', steps=3)
     board.grid(row=0, columnspan=6, padx=4, pady=4)
     board.setup_board()
     # Avoid window resizing
