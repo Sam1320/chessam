@@ -5,14 +5,15 @@ import subprocess
 import time
 import os
 from tkinter import *
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt"])
+import glob
+import env
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "-r", f"{env.base_path}/requirements.txt"])
 
 import chess
 import chess.engine
 
 from src import gui
 from src.board_functions import *
-import env
 
 
 
@@ -55,7 +56,7 @@ class HumanBot(gui.GameBoard):
     def __init__(self, parent, bot='n_step', steps=1):
         super(HumanBot, self).__init__(parent)
 
-        stockfish_exec = 'stockfish_14.1_linux_x64' if os.name == 'posix' else 'stockfish_13_win_x64_bmi2.exe'
+        stockfish_exec = glob.glob(os.path.join(env.base_path, 'stockfish*'))[0]
         stockfish_path = os.path.join(env.base_path, stockfish_exec)
 
         self.bot = bot
