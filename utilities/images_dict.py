@@ -1,11 +1,12 @@
 from tkinter import PhotoImage
+import env
 
 
 class Images:
     images = {}
     @staticmethod
     def load_images():
-        path = '/home/sam/Code/chessam/images'
+        path = env.images_path
         images = {"white_rook": PhotoImage(file=path + '/white_rook_50px.png'),
                   "white_pawn": PhotoImage(file=path + '/white_pawn_50px.png'),
                   "white_knight": PhotoImage(file=path + '/white_knight_50px.png'),

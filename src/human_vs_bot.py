@@ -7,19 +7,19 @@ import time
 import chess
 import chess.engine
 import os
+import env
 
 
-
-# TODO: implement alpha beta prunning
-# TODO: minimax not working properly (making uneven piece trades)
 # TODO: Store game states to be able to undo
 # TODO: verify double check
-# TODO: stalemate
-# TODO: add scores
 # TODO: add clocks
 # TODO: reset button
 # TODO: change pieces icons
 
+# DONE: implement alpha beta prunning
+# DONE: minimax not working properly (making uneven piece trades)
+# DONE: stalemate
+# DONE: add scores
 # DONE: one_step bot doesnt take en passant
 # DONE: fix selecting empty square bug
 # DONE: attacking bot doesnt take en passant
@@ -50,7 +50,7 @@ class HumanBot(gui.GameBoard):
         super(HumanBot, self).__init__(parent)
 
         stockfish_exec = 'stockfish_14.1_linux_x64' if os.name == 'posix' else 'stockfish_13_win_x64_bmi2.exe'
-        stockfish_path = os.path.join(os.path.dirname(__file__), '..', stockfish_exec)
+        stockfish_path = os.path.join(env.base_path, stockfish_exec)
 
         self.bot = bot
         self.steps = steps
