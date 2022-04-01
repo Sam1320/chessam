@@ -1,13 +1,19 @@
-from src import gui
-from tkinter import *
+import subprocess
 
-from src.board_functions import *
-import cProfile
+import sys
+import subprocess
 import time
+import os
+from tkinter import *
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt"])
+
 import chess
 import chess.engine
-import os
+
+from src import gui
+from src.board_functions import *
 import env
+
 
 
 # TODO: Store game states to be able to undo
